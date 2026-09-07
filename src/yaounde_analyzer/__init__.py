@@ -1,3 +1,3 @@
-"""Yaounde Language Analyzer: a lexical and syntactic analyzer for informal Yaounde speech."""
+"""Lexical and syntactic analysis of Cameroonian Francanglais collected in Yaounde."""
 
 __version__ = "0.1.0"

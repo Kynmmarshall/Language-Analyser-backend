@@ -1,21 +1,23 @@
-"""Command-line entry point.
-
-Lexer, grammar, and parser subcommands are added as those modules are implemented.
-"""
-
 from __future__ import annotations
 
-import sys
+import argparse
 
 from yaounde_analyzer import __version__
+from yaounde_analyzer.core.scope import TARGET_VARIETY
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    if args and args[0] in {"--version", "-V"}:
-        print(f"yaounde-analyzer {__version__}")
-        return 0
-    print(f"yaounde-analyzer {__version__}: no subcommands are implemented yet")
+    parser = argparse.ArgumentParser(
+        prog="yaounde-analyzer",
+        description="Cameroonian Francanglais only. Lexer and parser are not implemented yet.",
+    )
+    parser.add_argument("--version", "-V", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--scope", action="store_true", help="Print the fixed analysis target")
+    args = parser.parse_args(argv)
+    if args.scope:
+        print(TARGET_VARIETY)
+    else:
+        parser.print_help()
     return 0
 
 

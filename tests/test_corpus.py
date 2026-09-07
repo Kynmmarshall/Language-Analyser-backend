@@ -66,3 +66,22 @@ def test_validate_import_returns_parsed_revisions() -> None:
     records = [base_record(), base_record(statement_id="stmt-002")]
     revisions = validate_import(records)
     assert [r.statement_id for r in revisions] == ["stmt-001", "stmt-002"]
+
+
+def test_legacy_records_default_to_francanglais_without_changing_text() -> None:
+    record = base_record()
+    revision = validate_import([record])[0]
+    assert revision.target_variety == "cameroon_francanglais"
+    assert revision.model_dump()["target_variety"] == "cameroon_francanglais"
+    assert revision.raw_text == record["raw_text"]
+
+
+@pytest.mark.parametrize("target", ["french", "english", "pidgin", "multilingual", None])
+def test_import_rejects_other_analysis_targets(target: str | None) -> None:
+    with pytest.raises(CorpusImportError, match="target_variety"):
+        validate_import([base_record(target_variety=target)])
+
+
+def test_import_does_not_silently_ignore_language_mode() -> None:
+    with pytest.raises(CorpusImportError, match="language"):
+        validate_import([base_record(language="french")])

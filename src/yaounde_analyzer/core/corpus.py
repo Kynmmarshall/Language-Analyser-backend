@@ -1,27 +1,22 @@
-"""Corpus statement contracts and import validation.
-
-Enforces by construction that demo (synthetic) data can never be imported as
-field (authentic, manually transcribed) data.
-"""
+"""Provenance declarations require human review; validation cannot prove authenticity."""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import Field, model_validator
 
 from yaounde_analyzer.core.models import AnalysisResult, SourceKind
+from yaounde_analyzer.core.scope import FrancanglaisModel
 
 
 class CorpusImportError(ValueError):
     """Raised when a batch of statement records fails corpus import validation."""
 
 
-class StatementRevision(BaseModel):
+class StatementRevision(FrancanglaisModel):
     """One immutable, append-only revision of a collected statement."""
-
-    model_config = ConfigDict(frozen=True)
 
     statement_id: str
     revision: int = Field(ge=1)
@@ -42,10 +37,8 @@ class StatementRevision(BaseModel):
         return self
 
 
-class AnalysisSnapshot(BaseModel):
+class AnalysisSnapshot(FrancanglaisModel):
     """A frozen, reproducible bundle of analysis results tied to exact input versions."""
-
-    model_config = ConfigDict(frozen=True)
 
     snapshot_id: str
     analyzer_version: str

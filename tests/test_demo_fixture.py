@@ -36,3 +36,10 @@ def test_demo_fixture_preserves_raw_text_exactly() -> None:
 def test_demo_fixture_cannot_satisfy_field_data_requirement() -> None:
     revisions = validate_import(load_demo_records())
     assert not any(r.manual_transcription_attested for r in revisions)
+
+
+def test_demo_fixture_explicitly_targets_francanglais() -> None:
+    records = load_demo_records()
+    assert all(record["target_variety"] == "cameroon_francanglais" for record in records)
+    revisions = validate_import(records)
+    assert all(revision.target_variety == "cameroon_francanglais" for revision in revisions)

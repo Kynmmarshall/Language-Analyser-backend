@@ -10,6 +10,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from yaounde_analyzer.core.scope import MAX_INPUT_CHARACTERS, FrancanglaisModel
+
 EPSILON: tuple[str, ...] = ()
 """An empty RHS symbol sequence represents an epsilon production."""
 
@@ -33,7 +35,7 @@ class SourceSpan(BaseModel):
 
 
 class LanguageLabel(StrEnum):
-    """Independent language-origin annotation; never a claim of certainty without evidence."""
+    """Borrowing-origin candidates within Francanglais, not selectable analysis languages."""
 
     ENGLISH = "english"
     FRENCH = "french"
@@ -79,10 +81,8 @@ class Production(BaseModel):
     description: str = ""
 
 
-class GrammarSpec(BaseModel):
+class GrammarSpec(FrancanglaisModel):
     """A structured, corpus-derived context-free grammar."""
-
-    model_config = ConfigDict(frozen=True)
 
     version: str
     start_symbol: str
@@ -201,10 +201,18 @@ class TopicMatch(BaseModel):
     matched_terms: tuple[str, ...]
 
 
-class AnalysisResult(BaseModel):
-    """Combined lexical and syntactic analysis of a single statement revision."""
+class AnalysisRequest(FrancanglaisModel):
+    text: str = Field(min_length=1, max_length=MAX_INPUT_CHARACTERS)
 
-    model_config = ConfigDict(frozen=True)
+    @model_validator(mode="after")
+    def _check_nonblank_text(self) -> AnalysisRequest:
+        if not self.text.strip():
+            raise ValueError("text must contain more than whitespace")
+        return self
+
+
+class AnalysisResult(FrancanglaisModel):
+    """Combined lexical and syntactic analysis of a single statement revision."""
 
     statement_revision_id: str
     tokens: tuple[Token, ...]
