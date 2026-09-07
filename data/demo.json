@@ -1,0 +1,122 @@
+[
+  {
+    "statement_id": "demo-001",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Chauffeur, drop me for junction, di go dey for front small!",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["commuting"],
+    "created_at": "2026-01-10T07:15:00Z"
+  },
+  {
+    "statement_id": "demo-002",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Le reseau ici est vraiment zero-zero, je wanda comment on fait meme.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["internet"],
+    "created_at": "2026-01-10T09:30:00Z"
+  },
+  {
+    "statement_id": "demo-003",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Courant don go since morning, hmmm, ça derange trop.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["electricity"],
+    "created_at": "2026-01-10T12:00:00Z"
+  },
+  {
+    "statement_id": "demo-004",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Patron, baissez le prix small, ce tomate la est trop cher aujourd'hui.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["market_bargaining"],
+    "created_at": "2026-01-11T08:45:00Z"
+  },
+  {
+    "statement_id": "demo-005",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "La pluie don start again, garrr, quartier don devenir riviere.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["rain"],
+    "created_at": "2026-01-11T16:20:00Z"
+  },
+  {
+    "statement_id": "demo-006",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Essence don finish for station, taxi men dey wanda for queue depuis ce matin.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["fuel", "commuting"],
+    "created_at": "2026-01-12T06:50:00Z"
+  },
+  {
+    "statement_id": "demo-007",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Ekiee, viens acheter le tchop la, c'est frais, hala me small money seulement.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["roadside_business", "market_bargaining"],
+    "created_at": "2026-01-12T13:10:00Z"
+  },
+  {
+    "statement_id": "demo-008",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Bendskin man, dey for front, drop me devant l'entree du quartier.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["bendskin", "commuting"],
+    "created_at": "2026-01-12T17:40:00Z"
+  },
+  {
+    "statement_id": "demo-009",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Halte au checkpoint, montrez vos pieces, sinon on ne passe pas ce soir.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["security"],
+    "created_at": "2026-01-13T19:05:00Z"
+  },
+  {
+    "statement_id": "demo-010",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Le prof don dey come for salle, hurry small, cours go start now now.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["university"],
+    "created_at": "2026-01-14T07:55:00Z"
+  },
+  {
+    "statement_id": "demo-011",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Chauffeur dit que le prix a double, franc-anglais pour vrai, je wanda ce systeme.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["commuting", "fuel"],
+    "created_at": "2026-01-14T08:30:00Z"
+  },
+  {
+    "statement_id": "demo-012",
+    "revision": 1,
+    "source_kind": "demo",
+    "raw_text": "Internet don return small small, mais le reseau reste zero-zero for soir.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["internet", "electricity"],
+    "created_at": "2026-01-14T20:15:00Z"
+  }
+]
