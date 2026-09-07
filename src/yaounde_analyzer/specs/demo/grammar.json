@@ -1,0 +1,16 @@
+{
+  "version": "demo-2026-09-07",
+  "start_symbol": "S",
+  "terminals": ["DET", "NOUN", "PRON", "VERB", "PREP"],
+  "nonterminals": ["S", "NP", "VP", "PP"],
+  "productions": [
+    {"id": "demo.gram.s1", "lhs": "S", "rhs": ["NP", "VP"], "evidence_statement_ids": ["demo-010"], "description": "sentence = noun phrase + verb phrase; attested as a full clause within demo-010 ('on go au school')"},
+    {"id": "demo.gram.np1", "lhs": "NP", "rhs": ["DET", "NOUN"], "evidence_statement_ids": ["demo-007", "demo-011"], "description": "determiner + noun, e.g. 'le poisson', 'le taximan'"},
+    {"id": "demo.gram.np2", "lhs": "NP", "rhs": ["PRON"], "evidence_statement_ids": ["demo-007", "demo-010"], "description": "bare pronoun subject/object, e.g. 'on'"},
+    {"id": "demo.gram.np3", "lhs": "NP", "rhs": ["NOUN"], "evidence_statement_ids": ["demo-001", "demo-009"], "description": "bare noun, e.g. 'combi', 'kwatt'"},
+    {"id": "demo.gram.vp1", "lhs": "VP", "rhs": ["VERB"], "evidence_statement_ids": ["demo-003"], "description": "clause-final bare verb, e.g. 'je wanda !'"},
+    {"id": "demo.gram.vp2", "lhs": "VP", "rhs": ["VERB", "NP"], "evidence_statement_ids": ["demo-007"], "description": "verb + object noun phrase, e.g. 'tchop le poisson'"},
+    {"id": "demo.gram.vp3", "lhs": "VP", "rhs": ["VERB", "PP"], "evidence_statement_ids": ["demo-001", "demo-010"], "description": "verb + prepositional phrase, e.g. 'go au kwatt', 'go au school'"},
+    {"id": "demo.gram.pp1", "lhs": "PP", "rhs": ["PREP", "NP"], "evidence_statement_ids": ["demo-001", "demo-010"], "description": "preposition + noun phrase, e.g. 'au kwatt', 'au school'"}
+  ]
+}

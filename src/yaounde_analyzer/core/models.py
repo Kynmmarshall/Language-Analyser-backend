@@ -95,6 +95,8 @@ class GrammarSpec(FrancanglaisModel):
         overlap = set(self.terminals) & set(self.nonterminals)
         if overlap:
             raise ValueError(f"terminals and nonterminals must be disjoint, overlap: {overlap}")
+        if EOF in self.terminals or EOF in self.nonterminals:
+            raise ValueError(f"{EOF!r} is the reserved end-of-input symbol and cannot be declared")
         if self.start_symbol not in self.nonterminals:
             raise ValueError(f"start symbol {self.start_symbol!r} is not a declared nonterminal")
         known = set(self.terminals) | set(self.nonterminals)

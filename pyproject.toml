@@ -24,6 +24,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/yaounde_analyzer"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/yaounde_analyzer/specs" = "yaounde_analyzer/specs"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
