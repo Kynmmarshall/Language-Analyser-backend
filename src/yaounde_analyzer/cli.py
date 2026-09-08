@@ -7,11 +7,14 @@ first usable surface for the compiler core built in Phase 2.
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import sys
 from pathlib import Path
 
 from yaounde_analyzer import __version__
+from yaounde_analyzer.api.repository import create_user, get_user_by_username
+from yaounde_analyzer.api.settings import Settings
 from yaounde_analyzer.core.analysis import (
     PreparedAnalyzer,
     analyze_corpus,
@@ -22,6 +25,7 @@ from yaounde_analyzer.core.corpus import CorpusImportError, validate_import
 from yaounde_analyzer.core.parser import ParserConfigurationError
 from yaounde_analyzer.core.scope import TARGET_VARIETY
 from yaounde_analyzer.core.specs import load_demo_grammar, load_demo_lexicon
+from yaounde_analyzer.storage.db import Database
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -51,6 +55,11 @@ def _build_parser() -> argparse.ArgumentParser:
     corpus_parser.add_argument(
         "--analyze", action="store_true", help="Also analyze each statement and report stats"
     )
+
+    provision_parser = subparsers.add_parser(
+        "provision-user", help="Create a login account (interactive password prompt)"
+    )
+    provision_parser.add_argument("username")
 
     return parser
 
@@ -126,6 +135,29 @@ def _cmd_corpus_validate(path: Path, do_analyze: bool) -> int:
     return 0
 
 
+def _cmd_provision_user(username: str) -> int:
+    settings = Settings.from_env()
+    database = Database.create(settings.database_url)
+    database.init_schema()
+    session = database.session_factory()
+    try:
+        if get_user_by_username(session, username) is not None:
+            print(f"User {username!r} already exists.", file=sys.stderr)
+            return 1
+        password = getpass.getpass("Password: ")
+        if len(password) < 8:
+            print("Password must be at least 8 characters.", file=sys.stderr)
+            return 1
+        if getpass.getpass("Confirm password: ") != password:
+            print("Passwords do not match.", file=sys.stderr)
+            return 1
+        create_user(session, username, password)
+        print(f"Created user {username!r}.")
+        return 0
+    finally:
+        session.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -136,6 +168,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_grammar_check(args.show_steps)
     if args.command == "corpus-validate":
         return _cmd_corpus_validate(args.path, args.analyze)
+    if args.command == "provision-user":
+        return _cmd_provision_user(args.username)
     if args.scope:
         print(TARGET_VARIETY)
         return 0
