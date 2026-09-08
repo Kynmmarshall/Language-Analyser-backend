@@ -7,8 +7,6 @@ own isolated app/database). See asgi.py for the actual runnable `app` object.
 
 from __future__ import annotations
 
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,16 +33,9 @@ def create_app(*, settings: Settings | None = None, database: Database | None = 
     app.state.db = database
     app.state.analyzer = analyzer
 
-    cors_origins = [
-        origin.strip()
-        for origin in os.environ.get(
-            "YAOUNDE_CORS_ORIGINS", "http://127.0.0.1:5175,http://localhost:5175"
-        ).split(",")
-        if origin.strip()
-    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=list(settings.cors_origins),
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=["content-type", "x-csrf-token"],

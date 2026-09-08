@@ -60,11 +60,14 @@ def require_csrf(
     return auth_session.user
 
 
-def require_same_origin(request: Request) -> None:
-    """Reject cross-origin state-changing requests that predate a session (e.g. login)."""
+def require_same_origin(request: Request, settings: Settings = Depends(get_settings)) -> None:
+    """Reject cross-origin state-changing requests that predate a session (e.g. login).
+
+    Trusts the request's own origin (same-origin deployment, per Phase 4) as well as any
+    configured frontend origin (separate dev servers for the SPA and API)."""
     origin = request.headers.get("origin")
     if origin is None:
         return
-    expected = f"{request.url.scheme}://{request.url.netloc}"
-    if origin != expected:
+    self_origin = f"{request.url.scheme}://{request.url.netloc}"
+    if origin != self_origin and origin not in settings.cors_origins:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Cross-origin request rejected")
