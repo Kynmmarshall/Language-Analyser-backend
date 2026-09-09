@@ -146,3 +146,28 @@ class GrammarView(BaseModel):
     follow: tuple[SymbolSet, ...]
     table_entries: tuple[TableEntry, ...]
     table_conflicts: tuple[TableConflictView, ...]
+
+
+class FrequencyItem(BaseModel):
+    """One (term, count) row of a frequency table, most frequent first."""
+
+    model_config = ConfigDict(extra="forbid")
+    term: str
+    count: int
+
+
+class StatisticsView(BaseModel):
+    """Corpus-wide frequency, acceptance, topic, and borrowing-origin evidence, scoped to
+    every record's current (latest) revision at the time of the request."""
+
+    model_config = ConfigDict(extra="forbid")
+    statement_count: int
+    accepted_count: int
+    rejected_count: int
+    skipped_invalid_count: int
+    raw_frequency: tuple[FrequencyItem, ...]
+    canonical_frequency: tuple[FrequencyItem, ...]
+    terminal_frequency: tuple[FrequencyItem, ...]
+    unknown_words: tuple[str, ...]
+    topic_counts: tuple[FrequencyItem, ...]
+    language_candidate_counts: tuple[FrequencyItem, ...]

@@ -343,6 +343,45 @@ def test_operating_on_an_unknown_statement_returns_404(client: TestClient) -> No
     assert client.get("/api/corpus/missing", headers=csrf_headers(client)).status_code == 404
 
 
+# --- Statistics ----------------------------------------------------------------------------
+
+
+def test_statistics_requires_authentication(client: TestClient) -> None:
+    assert client.get("/api/statistics").status_code == 401
+
+
+def test_statistics_reflects_the_current_corpus(client: TestClient) -> None:
+    login(client)
+    _create_statement(client)
+    response = client.get("/api/statistics", headers=csrf_headers(client))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["statement_count"] == 1
+    assert body["accepted_count"] == 1
+    assert body["rejected_count"] == 0
+    assert body["skipped_invalid_count"] == 0
+    assert {"term": "commuting", "count": 1} in body["topic_counts"]
+    assert body["unknown_words"] == []
+    assert any(item["term"] == "combi" for item in body["canonical_frequency"])
+
+
+def test_statistics_reports_unknown_words_without_crashing(client: TestClient) -> None:
+    login(client)
+    client.post(
+        "/api/corpus",
+        json={
+            "statement_id": "s-002", "source_kind": "demo", "raw_text": "Blorptastic zibble.",
+            "manual_transcription_attested": False, "collector_id": "alice", "topics": [],
+        },
+        headers=csrf_headers(client),
+    )
+    response = client.get("/api/statistics", headers=csrf_headers(client))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["rejected_count"] == 1
+    assert set(body["unknown_words"]) == {"Blorptastic", "zibble"}
+
+
 # --- Health ------------------------------------------------------------------------------
 
 

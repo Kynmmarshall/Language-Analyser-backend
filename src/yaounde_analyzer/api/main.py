@@ -14,6 +14,7 @@ from yaounde_analyzer.api.routes import analysis as analysis_routes
 from yaounde_analyzer.api.routes import auth as auth_routes
 from yaounde_analyzer.api.routes import corpus as corpus_routes
 from yaounde_analyzer.api.routes import grammar as grammar_routes
+from yaounde_analyzer.api.routes import statistics as statistics_routes
 from yaounde_analyzer.api.settings import Settings
 from yaounde_analyzer.core.analysis import PreparedAnalyzer
 from yaounde_analyzer.core.specs import load_demo_grammar, load_demo_lexicon
@@ -46,6 +47,7 @@ def create_app(*, settings: Settings | None = None, database: Database | None = 
     app.include_router(analysis_routes.router)
     app.include_router(corpus_routes.router)
     app.include_router(grammar_routes.router)
+    app.include_router(statistics_routes.router)
 
     @app.get("/api/health/live")
     def live() -> dict[str, str]:
