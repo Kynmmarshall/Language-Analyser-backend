@@ -75,10 +75,12 @@ class PreparedAnalyzer:
         prepared = prepare_grammar(grammar)
         self.grammar = prepared.grammar
         self.transformation_steps: tuple[TransformationStep, ...] = prepared.steps
-        nullable = compute_nullable(self.grammar)
-        first = compute_first(self.grammar, nullable)
-        follow = compute_follow(self.grammar, first, nullable)
-        self.table: LL1Table = build_ll1_table(self.grammar, first, follow, nullable)
+        self.nullable: frozenset[str] = compute_nullable(self.grammar)
+        self.first: dict[str, frozenset[str]] = compute_first(self.grammar, self.nullable)
+        self.follow: dict[str, frozenset[str]] = compute_follow(
+            self.grammar, self.first, self.nullable
+        )
+        self.table: LL1Table = build_ll1_table(self.grammar, self.first, self.follow, self.nullable)
 
     def check(self) -> None:
         """Raise ParserConfigurationError now if the grammar is not valid LL(1)."""

@@ -144,6 +144,21 @@ def test_analyze_never_persists_anything(client: TestClient) -> None:
     assert corpus == []
 
 
+# --- Public grammar --------------------------------------------------------------------
+
+
+def test_grammar_is_public_and_reports_a_conflict_free_ll1_table(client: TestClient) -> None:
+    response = client.get("/api/grammar")
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["lexicon"]) > 0
+    assert len(body["transformation_steps"]) > 0
+    assert body["table_conflicts"] == []
+    assert len(body["table_entries"]) > 0
+    assert len(body["first"]) > 0
+    assert len(body["follow"]) > 0
+
+
 # --- Corpus: authorization ---------------------------------------------------------------
 
 

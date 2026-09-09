@@ -12,7 +12,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from yaounde_analyzer.core.models import ParseResult, Token, TopicMatch
+from yaounde_analyzer.core.lexicon import LexicalEntry
+from yaounde_analyzer.core.models import (
+    GrammarSpec,
+    ParseResult,
+    Token,
+    TopicMatch,
+    TransformationStep,
+)
 
 
 class LoginRequest(BaseModel):
@@ -97,3 +104,45 @@ class StatementPublic(BaseModel):
 class ErrorResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     detail: str
+
+
+class TableEntry(BaseModel):
+    """One conflict-free LL(1) table cell."""
+
+    model_config = ConfigDict(extra="forbid")
+    nonterminal: str
+    terminal: str
+    production_id: str
+
+
+class TableConflictView(BaseModel):
+    """A table cell claimed by more than one production; never silently resolved."""
+
+    model_config = ConfigDict(extra="forbid")
+    nonterminal: str
+    terminal: str
+    production_ids: tuple[str, ...]
+
+
+class SymbolSet(BaseModel):
+    """One row of a FIRST/FOLLOW/nullable table, keyed by grammar symbol."""
+
+    model_config = ConfigDict(extra="forbid")
+    symbol: str
+    terminals: tuple[str, ...]
+
+
+class GrammarView(BaseModel):
+    """Everything the Grammar screen needs: lexicon, original/transformed rules, the
+    transformation ledger, nullable/FIRST/FOLLOW sets, and the LL(1) table."""
+
+    model_config = ConfigDict(extra="forbid")
+    lexicon: tuple[LexicalEntry, ...]
+    descriptive_grammar: GrammarSpec
+    grammar: GrammarSpec
+    transformation_steps: tuple[TransformationStep, ...]
+    nullable: tuple[str, ...]
+    first: tuple[SymbolSet, ...]
+    follow: tuple[SymbolSet, ...]
+    table_entries: tuple[TableEntry, ...]
+    table_conflicts: tuple[TableConflictView, ...]

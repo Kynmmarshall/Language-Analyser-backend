@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from yaounde_analyzer.api.routes import analysis as analysis_routes
 from yaounde_analyzer.api.routes import auth as auth_routes
 from yaounde_analyzer.api.routes import corpus as corpus_routes
+from yaounde_analyzer.api.routes import grammar as grammar_routes
 from yaounde_analyzer.api.settings import Settings
 from yaounde_analyzer.core.analysis import PreparedAnalyzer
 from yaounde_analyzer.core.specs import load_demo_grammar, load_demo_lexicon
@@ -44,6 +45,7 @@ def create_app(*, settings: Settings | None = None, database: Database | None = 
     app.include_router(auth_routes.router)
     app.include_router(analysis_routes.router)
     app.include_router(corpus_routes.router)
+    app.include_router(grammar_routes.router)
 
     @app.get("/api/health/live")
     def live() -> dict[str, str]:
