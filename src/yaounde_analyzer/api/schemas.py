@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from yaounde_analyzer.core.lexicon import LexicalEntry
 from yaounde_analyzer.core.models import (
+    AnalysisResult,
     GrammarSpec,
     ParseResult,
     Token,
@@ -171,3 +172,35 @@ class StatisticsView(BaseModel):
     unknown_words: tuple[str, ...]
     topic_counts: tuple[FrequencyItem, ...]
     language_candidate_counts: tuple[FrequencyItem, ...]
+
+
+class ExportStatement(BaseModel):
+    """One statement's export-scoped metadata; `collector_id`/`manual_transcription_attested`
+    are redacted (None) when the export scope is "published"."""
+
+    model_config = ConfigDict(extra="forbid")
+    statement_id: str
+    revision: int
+    source_kind: str
+    raw_text: str
+    topics: tuple[str, ...]
+    collector_id: str | None
+    manual_transcription_attested: bool | None
+    published: bool
+    created_at: datetime
+
+
+class EvidenceBundle(BaseModel):
+    """A reproducible export: the exact grammar/lexicon plus every included statement's
+    analysis, tied together by `analyzer_version`/`spec_hash`."""
+
+    model_config = ConfigDict(extra="forbid")
+    generated_at: datetime
+    scope: str
+    analyzer_version: str
+    spec_hash: str
+    lexicon: tuple[LexicalEntry, ...]
+    descriptive_grammar: GrammarSpec
+    grammar: GrammarSpec
+    statements: tuple[ExportStatement, ...]
+    results: tuple[AnalysisResult, ...]

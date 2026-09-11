@@ -382,6 +382,57 @@ def test_statistics_reports_unknown_words_without_crashing(client: TestClient) -
     assert set(body["unknown_words"]) == {"Blorptastic", "zibble"}
 
 
+# --- Evidence export -------------------------------------------------------------------
+
+
+def test_export_requires_authentication(client: TestClient) -> None:
+    assert client.get("/api/export").status_code == 401
+    assert client.get("/api/export/csv").status_code == 401
+
+
+def test_export_all_scope_includes_full_metadata(client: TestClient) -> None:
+    login(client)
+    _create_statement(client)
+    response = client.get("/api/export", headers=csrf_headers(client))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["scope"] == "all"
+    assert len(body["statements"]) == 1
+    statement = body["statements"][0]
+    assert statement["collector_id"] == "alice"
+    assert statement["published"] is False
+    assert len(body["results"]) == 1
+    assert len(body["lexicon"]) > 0
+
+
+def test_export_published_scope_redacts_and_filters(client: TestClient) -> None:
+    login(client)
+    _create_statement(client)
+    response = client.get("/api/export?scope=published", headers=csrf_headers(client))
+    assert response.json()["statements"] == []
+
+    client.post("/api/corpus/s-001/publish", json={"revision": 1}, headers=csrf_headers(client))
+    response = client.get("/api/export?scope=published", headers=csrf_headers(client))
+    body = response.json()
+    assert len(body["statements"]) == 1
+    statement = body["statements"][0]
+    assert statement["collector_id"] is None
+    assert statement["manual_transcription_attested"] is None
+    assert statement["published"] is True
+
+
+def test_export_csv_is_downloadable(client: TestClient) -> None:
+    login(client)
+    _create_statement(client)
+    response = client.get("/api/export/csv", headers=csrf_headers(client))
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "attachment" in response.headers["content-disposition"]
+    lines = response.text.strip().splitlines()
+    assert lines[0].startswith("statement_id,revision,source_kind")
+    assert "s-001" in lines[1]
+
+
 # --- Health ------------------------------------------------------------------------------
 
 
