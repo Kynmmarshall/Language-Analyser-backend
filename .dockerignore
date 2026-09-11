@@ -1,0 +1,21 @@
+.git/
+.gitignore
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.vscode/
+*.egg-info/
+build/
+dist/
+.env
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+tests/
+Compiler Construction SET A Summer 2026.pdf

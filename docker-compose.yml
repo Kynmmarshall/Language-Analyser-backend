@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    image: francanglais-studio-api:local
+    restart: unless-stopped
+    # Loopback-only by default, per the production plan: bind behind a reverse proxy,
+    # never expose the app port directly. Override with `ports: ["8010:8000"]` if you
+    # genuinely need it reachable without a proxy (e.g. local testing).
+    ports:
+      - "127.0.0.1:8010:8000"
+    environment:
+      YAOUNDE_ENV: production
+      YAOUNDE_DATABASE_URL: sqlite:////app/data/app.db
+      # Comma-separated list of frontend origins allowed to call this API with cookies.
+      YAOUNDE_CORS_ORIGINS: https://example.com
+    volumes:
+      - francanglais-data:/app/data
+
+volumes:
+  francanglais-data:
