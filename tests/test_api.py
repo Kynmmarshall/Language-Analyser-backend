@@ -226,6 +226,59 @@ def test_public_analyze_reports_unknown_vocabulary(client: TestClient) -> None:
     assert response.json()["parse"]["rejection_reason"] == "lexical_unknown_token"
 
 
+def test_accepted_statements_carry_no_suggestions(client: TestClient) -> None:
+    response = client.post("/api/analyze", json={"text": "Combi va au kwatt."})
+    assert response.json()["suggestions"] == []
+
+
+def test_a_misspelt_word_suggests_the_nearest_lexicon_entry(client: TestClient) -> None:
+    response = client.post("/api/analyze", json={"text": "Le resau ne passe pas."})
+    body = response.json()
+    assert body["parse"]["rejection_reason"] == "lexical_unknown_token"
+    suggestion = body["suggestions"][0]
+    assert suggestion["kind"] == "unknown_word"
+    assert "resau" in suggestion["message"]
+    assert "réseau" in suggestion["replacements"]
+    # The span must point at the offending word so the UI can highlight it.
+    text = "Le resau ne passe pas."
+    assert text[suggestion["span"]["start"] : suggestion["span"]["end"]] == "resau"
+
+
+def test_a_syntax_failure_reports_what_the_table_expected(client: TestClient) -> None:
+    response = client.post("/api/analyze", json={"text": "Le le le."})
+    body = response.json()
+    assert body["parse"]["rejection_reason"] == "syntax_no_table_entry"
+    suggestion = body["suggestions"][0]
+    assert suggestion["kind"] == "unexpected_token"
+    assert "expected" in suggestion["message"]
+    # Example words are drawn from the lexicon for whichever terminals were expected.
+    assert suggestion["replacements"]
+
+
+def test_an_accented_twin_is_offered_when_the_plain_spelling_blocks_the_parse(
+    client: TestClient,
+) -> None:
+    # 'la' and 'là' are different words, so the lexer takes the spelling as written; the
+    # suggester is what points out the other reading.
+    response = client.post("/api/analyze", json={"text": "la nga la es ma combi"})
+    body = response.json()
+    assert body["parse"]["accepted"] is False
+    messages = [s["message"] for s in body["suggestions"]]
+    assert any("'là'" in message for message in messages)
+    # Reported once, however many times the word occurs.
+    assert sum("was read as DET" in message for message in messages) == 1
+
+    accepted = client.post("/api/analyze", json={"text": "la nga là es ma combi"})
+    assert accepted.json()["parse"]["accepted"] is True
+
+
+def test_suggestions_are_identical_across_runs(client: TestClient) -> None:
+    payload = {"text": "Le resau ne passe pas."}
+    first = client.post("/api/analyze", json=payload).json()["suggestions"]
+    second = client.post("/api/analyze", json=payload).json()["suggestions"]
+    assert first == second
+
+
 def test_public_analyze_rejects_blank_and_oversized_text(client: TestClient) -> None:
     assert client.post("/api/analyze", json={"text": "   "}).status_code == 422
     assert client.post("/api/analyze", json={"text": "x" * 2001}).status_code == 422

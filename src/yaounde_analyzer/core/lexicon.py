@@ -16,7 +16,7 @@ from pydantic import Field, model_validator
 
 from yaounde_analyzer.core.models import LanguageLabel
 from yaounde_analyzer.core.scope import FrancanglaisModel
-from yaounde_analyzer.core.text import canonicalize_word
+from yaounde_analyzer.core.text import canonicalize_word, fold_word
 
 
 class EntrySource(StrEnum):
@@ -84,6 +84,46 @@ class LexiconSpec(FrancanglaisModel):
     def single_word_lookup(self) -> dict[str, LexicalEntry]:
         """Entries whose canonical form is exactly one word, keyed by that word."""
         return {entry.canonical: entry for entry in self.entries if len(entry.words) == 1}
+
+    def folded_single_word_lookup(self) -> dict[str, LexicalEntry]:
+        """Single-word entries keyed by accent-folded form, omitting ambiguous keys.
+
+        'a' and 'à' fold together, as do 'mais' and 'maïs', so neither pair is reachable
+        by folding; only an exact match can tell those apart.
+        """
+        by_key: dict[str, list[LexicalEntry]] = {}
+        for entry in self.entries:
+            if len(entry.words) == 1:
+                by_key.setdefault(fold_word(entry.canonical), []).append(entry)
+        return {key: found[0] for key, found in by_key.items() if len(found) == 1}
+
+    def homographs(self) -> dict[str, tuple[LexicalEntry, ...]]:
+        """Entries keyed by canonical form that differ from a sibling only by accent.
+
+        These are exactly the forms folding refuses to guess between, so a caller can
+        offer the alternative spelling when the chosen one does not fit.
+        """
+        by_key: dict[str, list[LexicalEntry]] = {}
+        for entry in self.entries:
+            by_key.setdefault(fold_word(entry.canonical), []).append(entry)
+        return {
+            entry.canonical: tuple(o for o in found if o.canonical != entry.canonical)
+            for found in by_key.values()
+            if len(found) > 1
+            for entry in found
+        }
+
+    def multiword_entries_by_folded_first_word(self) -> dict[str, tuple[LexicalEntry, ...]]:
+        """Multiword entries grouped by the folded form of their first word."""
+        by_first_word: dict[str, list[LexicalEntry]] = {}
+        for entry in self.entries:
+            words = entry.words
+            if len(words) > 1:
+                by_first_word.setdefault(fold_word(words[0]), []).append(entry)
+        return {
+            first_word: tuple(sorted(entries, key=lambda e: len(e.words), reverse=True))
+            for first_word, entries in by_first_word.items()
+        }
 
     def multiword_entries_by_first_word(self) -> dict[str, tuple[LexicalEntry, ...]]:
         """Multiword entries grouped by their first word, longest word-count first.

@@ -56,8 +56,14 @@ def test_a_bare_verb_sentence_is_accepted() -> None:
     assert parse.accepted
 
 
-def test_verb_first_order_is_rejected_as_unsupported_syntax() -> None:
-    _, parse, _ = analyze_tokens_and_parse("Va combi.", ANALYZER)
+def test_verb_first_imperative_is_accepted() -> None:
+    _, parse, _ = analyze_tokens_and_parse("Va au kwatt.", ANALYZER)
+    assert parse.accepted
+
+
+def test_word_salad_is_still_rejected() -> None:
+    # Wider clause coverage must not turn the grammar into one that accepts anything.
+    _, parse, _ = analyze_tokens_and_parse("Le le le.", ANALYZER)
     assert not parse.accepted
     assert parse.rejection_reason == RejectionReason.SYNTAX_NO_TABLE_ENTRY
 
@@ -93,10 +99,12 @@ def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> N
         # but must never miss a topic a human reviewer already confirmed.
         assert hand_labels <= detected, (record["statement_id"], hand_labels, detected)
 
-    # Only single-token utterances (a bare interjection, a fixed formula) are complete
-    # sentences under this small grammar; the longer statements are still rejected.
-    accepted = {r.statement_revision_id.split("@")[0] for r in results if r.parse.accepted}
-    assert accepted == {"demo-013", "demo-014"}
+    # Two constructions stay out of reach of an LL(1) table: an adverb after an object
+    # ('le poisson ici') is indistinguishable from one inside the verb group, and a
+    # post-verbal clitic ('va me bring') from an object pronoun. Both are left rejected
+    # rather than papered over with an ambiguous rule.
+    rejected = {r.statement_revision_id.split("@")[0] for r in results if not r.parse.accepted}
+    assert rejected == {"demo-007", "demo-008"}
 
 
 def test_corpus_statistics_reports_full_lexical_coverage() -> None:

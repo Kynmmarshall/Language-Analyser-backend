@@ -24,6 +24,12 @@ observed in the field, and they should not be reported as field findings.
   <https://fr.wiktionary.org/wiki/Annexe:Camfranglais>
   Licensed CC BY-SA 4.0 (<https://creativecommons.org/licenses/by-sa/4.0/>).
 
+A second group of `dictionary` entries is not from that annex: the common French
+closed-class words (determiners, pronouns, prepositions, conjunctions, auxiliaries)
+that Francanglais is built on. They carry no citation because they are ordinary
+standard French, and they exist so that everyday input reaches the parser instead of
+failing as unknown vocabulary.
+
 Glosses in the `description` field are written fresh in English rather than copied
 from the source text. Origin labels in `language_candidates` follow the source's
 etymological notes where it gives them, and fall back to `uncertain` where it does

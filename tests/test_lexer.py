@@ -7,7 +7,7 @@ import unicodedata
 import pytest
 from pydantic import ValidationError
 
-from yaounde_analyzer.core.lexer import UNKNOWN_TERMINAL, tokenize
+from yaounde_analyzer.core.lexer import SEP_TERMINAL, UNKNOWN_TERMINAL, tokenize
 from yaounde_analyzer.core.lexicon import EntrySource, LexicalEntry, LexiconSpec
 from yaounde_analyzer.core.specs import load_demo_corpus_records, load_demo_lexicon
 
@@ -51,8 +51,22 @@ def test_three_word_multiword_entry_and_standalone_first_word() -> None:
 def test_multiword_match_is_blocked_across_punctuation() -> None:
     # "au, lieu de" has a comma between "au" and "lieu": the phrase must not match.
     tokens = tokenize("au, lieu de", LEXICON)
-    assert [t.terminal for t in tokens] == ["PREP", UNKNOWN_TERMINAL, "PREP"]
-    assert tokens[1].raw == "lieu"
+    assert [t.terminal for t in tokens] == ["PREP", SEP_TERMINAL, UNKNOWN_TERMINAL, "PREP"]
+    assert tokens[2].raw == "lieu"
+
+
+def test_unaccented_spelling_resolves_to_the_accented_entry() -> None:
+    tokens = tokenize("Le reseau coute trop cher deja", LEXICON)
+    assert [t.canonical for t in tokens] == ["le", "réseau", "coûte", "trop", "cher", "déjà"]
+    # The writer's own spelling is still preserved verbatim.
+    assert [t.raw for t in tokens][1] == "reseau"
+
+
+def test_accent_folding_never_merges_a_real_minimal_pair() -> None:
+    # 'a'/'à' and 'mais'/'maïs' fold together, so each must keep its own exact match
+    # rather than being resolved to whichever entry folding happened to reach first.
+    assert [t.terminal for t in tokenize("il a mais", LEXICON)] == ["PRON", "VERB", "CONJ"]
+    assert [t.terminal for t in tokenize("à maïs", LEXICON)] == ["PREP", "NOUN"]
 
 
 def test_unknown_word_is_preserved_not_dropped() -> None:
@@ -63,9 +77,18 @@ def test_unknown_word_is_preserved_not_dropped() -> None:
     assert unknown[0].span.start == "On go au ".__len__()
 
 
-def test_whitespace_and_punctuation_are_trivia() -> None:
-    tokens = tokenize("On   go,  au   kwatt!!!", LEXICON)
+def test_whitespace_and_sentence_punctuation_are_trivia() -> None:
+    tokens = tokenize("On   go   au   kwatt!!!", LEXICON)
     assert [t.canonical for t in tokens] == ["on", "go", "au", "kwatt"]
+
+
+def test_clause_punctuation_becomes_a_separator_token() -> None:
+    # Commas carry clause structure, so unlike '!' they reach the parser.
+    tokens = tokenize("On go, au kwatt!", LEXICON)
+    assert [t.terminal for t in tokens] == ["PRON", "VERB", SEP_TERMINAL, "PREP", "NOUN"]
+    separator = tokens[2]
+    assert separator.raw == ","
+    assert "On go, au kwatt!"[separator.span.start : separator.span.end] == ","
 
 
 def test_offsets_use_code_points_not_utf16_units() -> None:

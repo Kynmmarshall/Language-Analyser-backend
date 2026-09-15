@@ -21,6 +21,7 @@ from yaounde_analyzer.core.models import (
     TopicMatch,
     TransformationStep,
 )
+from yaounde_analyzer.core.suggest import Suggestion
 
 
 class LoginRequest(BaseModel):
@@ -53,6 +54,7 @@ class AnalyzeResponse(BaseModel):
     tokens: tuple[Token, ...]
     parse: ParseResult
     topics: tuple[TopicMatch, ...]
+    suggestions: tuple[Suggestion, ...] = ()
 
 
 class StatementCreateRequest(BaseModel):

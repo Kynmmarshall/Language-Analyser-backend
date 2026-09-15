@@ -70,6 +70,7 @@ class Token(BaseModel):
     is_multiword: bool = False
     component_spans: tuple[SourceSpan, ...] = ()
     rule_id: str
+    description: str = ""
     span: SourceSpan
 
     @model_validator(mode="after")
