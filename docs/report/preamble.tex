@@ -1,0 +1,147 @@
+% ---------------------------------------------------------------------------
+% Shared preamble: fonts, colours, page furniture and semantic helper macros.
+% ---------------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{microtype}
+
+\usepackage[
+  a4paper,
+  top=2.5cm, bottom=2.5cm, left=2.6cm, right=2.6cm,
+  headheight=14pt
+]{geometry}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{rotating}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{amssymb}
+\usepackage{pdflscape}
+\usepackage[hidelinks]{hyperref}
+
+% --- Palette -----------------------------------------------------------------
+\definecolor{ictnavy}{HTML}{1F3864}
+\definecolor{ictblue}{HTML}{2E5BCC}
+\definecolor{ictorange}{HTML}{C55A11}
+\definecolor{ictgreen}{HTML}{17664A}
+\definecolor{ictred}{HTML}{B42318}
+\definecolor{ictgrey}{HTML}{5B6472}
+\definecolor{ictpanel}{HTML}{F4F6FB}
+\definecolor{ictrule}{HTML}{D7DEEB}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=ictnavy,
+  urlcolor=ictblue,
+  citecolor=ictnavy,
+  pdfstartview={FitH}
+}
+
+% --- Section styling ---------------------------------------------------------
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{ictnavy}}{\thesection}{0.8em}{}
+  [{\color{ictorange}\titlerule[1pt]}]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{ictblue}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{ictnavy}}{\thesubsubsection}{0.6em}{}
+
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.18}
+
+% --- Headers and footers -----------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\textsc{\color{ictnavy}Francanglais Studio}}
+\fancyhead[R]{\footnotesize\textsc{\color{ictnavy}CS4110 Compiler Construction}}
+\fancyfoot[C]{\footnotesize\color{ictgrey}The ICT University\quad\textbullet\quad\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{ictrule}\leaders\hrule height \headrulewidth\hfill}}
+
+% --- Captions ----------------------------------------------------------------
+\captionsetup{
+  font=small,
+  labelfont={bf,color=ictnavy},
+  justification=centering,
+  skip=6pt
+}
+
+% --- Callout boxes -----------------------------------------------------------
+\newtcolorbox{keypoint}[1][Key point]{
+  enhanced, breakable,
+  colback=ictpanel, colframe=ictnavy,
+  boxrule=0pt, leftrule=3pt,
+  arc=1pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small\color{white},
+  title={#1},
+  attach boxed title to top left={xshift=0pt, yshift=-2pt},
+  boxed title style={colback=ictnavy, boxrule=0pt, arc=1pt}
+}
+
+\newtcolorbox{limitbox}[1][Honest limitation]{
+  enhanced, breakable,
+  colback=white, colframe=ictorange,
+  boxrule=0pt, leftrule=3pt,
+  arc=1pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small\color{white},
+  title={#1},
+  attach boxed title to top left={xshift=0pt, yshift=-2pt},
+  boxed title style={colback=ictorange, boxrule=0pt, arc=1pt}
+}
+
+\newtcolorbox{todobox}[1][Team action required]{
+  enhanced, breakable,
+  colback=white, colframe=ictred,
+  boxrule=0pt, leftrule=3pt,
+  arc=1pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small\color{white},
+  title={#1},
+  attach boxed title to top left={xshift=0pt, yshift=-2pt},
+  boxed title style={colback=ictred, boxrule=0pt, arc=1pt}
+}
+
+% --- Code listings -----------------------------------------------------------
+\lstdefinestyle{ictcode}{
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{ictblue}\bfseries,
+  commentstyle=\color{ictgrey}\itshape,
+  stringstyle=\color{ictgreen},
+  numbers=left, numberstyle=\tiny\color{ictgrey}, numbersep=8pt,
+  backgroundcolor=\color{ictpanel},
+  frame=leftline, rulecolor=\color{ictrule}, framesep=6pt,
+  breaklines=true, showstringspaces=false,
+  upquote=true, columns=fullflexible,
+  literate={é}{{\'e}}1 {è}{{\`e}}1 {à}{{\`a}}1 {ç}{{\c c}}1 {ô}{{\^o}}1 {û}{{\^u}}1 {ï}{{\"i}}1
+}
+\lstset{style=ictcode}
+
+% --- Semantic helpers --------------------------------------------------------
+\newcommand{\accepted}{\textcolor{ictgreen}{\textbf{accepted}}}
+\newcommand{\rejected}{\textcolor{ictred}{\textbf{rejected}}}
+\newcommand{\term}[1]{\texttt{#1}}
+\newcommand{\nonterm}[1]{\textit{#1}}
+\newcommand{\eps}{$\varepsilon$}
+\newcommand{\fw}[1]{\textsf{#1}}
+
+% Figure helper: one image, centred, with caption and label.
+\newcommand{\diagram}[3]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#2\linewidth]{figures/#1}
+    \caption{#3}
+    \label{fig:#1}
+  \end{figure}
+}

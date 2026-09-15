@@ -1,0 +1,160 @@
+\section{Lexical Analysis}\label{sec:lexical}
+
+\subsection{Scanner design}
+
+The lexical layer is written from scratch -- no parser generator, no \texttt{lex}. It runs
+in two passes over the raw statement.
+
+\textbf{Pass one -- scanning.} \texttt{core/text.py} splits the input into typed character
+runs (word, number, punctuation, separator, space, newline) using the five regular
+expressions in Table~\ref{tab:regex}. Each run keeps its byte offsets so every later
+artefact -- token, parse error, repair suggestion -- can point back at the exact source
+span the user typed.
+
+\textbf{Pass two -- lexing.} \texttt{core/lexer.py} consumes those runs and resolves each
+word against the lexicon, producing tokens carrying a terminal class, a canonical form, a
+donor-language label and a gloss.
+
+\input{generated/regexes}
+
+\subsection{Word regex in detail}
+
+The word pattern is the one that does real linguistic work:
+
+\begin{lstlisting}[language=Python, numbers=none, basicstyle=\ttfamily\footnotesize]
+_WORD_RE = (?:[^\W\d_]|[\u0300-\u036f])+
+           (?:['\u2019-](?:[^\W\d_]|[\u0300-\u036f])+)*
+\end{lstlisting}
+
+\begin{itemize}[leftmargin=1.4em, itemsep=0.2em]
+  \item \term{[\^{}\textbackslash W\textbackslash d\_]} matches any Unicode letter while
+        excluding digits and underscore, so \fw{ça}, \fw{où} and \fw{tchop} all scan as
+        single words without an explicit accent list.
+  \item \term{[\textbackslash u0300-\textbackslash u036f]} admits \emph{combining} marks,
+        so a decomposed \fw{e + U+0301} scans identically to a precomposed \fw{é}. This is
+        essential for typed input, where the two encodings are visually identical.
+  \item The trailing group keeps elisions and hyphenated compounds whole:
+        \fw{j'ai}, \fw{n'est}, \fw{est-ce}, \fw{quelqu'un}. Both the ASCII apostrophe and
+        the typographic \fw{U+2019} are accepted, because phones produce the latter.
+\end{itemize}
+
+\subsection{Token categories}
+
+\input{generated/lexicon-summary}
+
+The \TerminalCount\ terminals cover the categories the rubric asks for and three that the
+data forced on us:
+
+\begin{itemize}[leftmargin=1.4em, itemsep=0.2em]
+  \item \term{NOUN}, \term{VERB}, \term{ADJ}, \term{ADV}, \term{DET}, \term{PRON},
+        \term{PREP}, \term{CONJ} -- the conventional word classes.
+  \item \term{NEG} is split out from \term{ADV} because Francanglais negation is
+        positionally constrained in a way ordinary adverbs are not, and folding the two
+        together introduced grammar conflicts.
+  \item \term{INTJ} covers the discourse particles (\fw{ehh}, \fw{ashia}, \fw{wah}) that
+        open and close a very large share of real utterances.
+  \item \term{FORMULA} covers fixed multiword expressions that are lexically frozen --
+        they are matched as one token even though they span several words.
+  \item \term{SEP} is emitted for \term{,} \term{;} \term{:}. These are genuine clause
+        boundaries in speech, so the parser needs to see them; sentence-final
+        \term{.\;!\;?} remain trivia.
+\end{itemize}
+
+\subsection{Slang and code-mixed tokens}
+
+Every entry records the donor language it came from, which is what lets the analyzer
+report code-mixing quantitatively rather than impressionistically.
+
+\input{generated/origin-summary}
+
+A statement is reported as code-mixed when its tokens resolve to more than one donor
+label; the reported evidence is the list of tokens and labels themselves. Slang is not a
+separate terminal -- a slang noun is still a \term{NOUN} -- because slang is a fact about
+\emph{provenance}, not about syntax. Treating it otherwise would have duplicated the whole
+grammar.
+
+\subsection{Accent and case normalisation}
+
+Two normalisations are applied, and the distinction between them matters:
+
+\begin{description}[leftmargin=1.6em, style=nextline, font=\ttfamily]
+  \item[canonicalize\_word] NFC normalise, then casefold. This is the identity used for
+        storage and display: \fw{Taxi}, \fw{TAXI} and \fw{taxi} are one entry.
+  \item[fold\_word] NFD decompose, strip combining marks, recompose, casefold. This is the
+        \emph{fallback} identity: \fw{bénéf} and \fw{benef} reach the same entry even
+        though the user typed neither form exactly.
+\end{description}
+
+Folding is deliberately a fallback rather than the primary key, because in French it
+destroys real contrasts. Lookup therefore proceeds in strict priority order:
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.1em]
+  \item exact multiword match, \item folded multiword match,
+  \item exact single-word match, \item folded single-word match,
+  \item otherwise \term{UNKNOWN}.
+\end{enumerate}
+
+Because exact matches win, the four attested homograph pairs survive intact:
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Form A} & \textbf{Class} & \textbf{Form B} & \textbf{Class} \\
+\midrule
+\fw{a}    & \term{VERB} (\textit{has})      & \fw{à}    & \term{PREP} (\textit{to, at}) \\
+\fw{la}   & \term{DET} (\textit{the})       & \fw{là}   & \term{ADV} (\textit{there}) \\
+\fw{ou}   & \term{CONJ} (\textit{or})       & \fw{où}   & \term{ADV} (\textit{where}) \\
+\fw{mais} & \term{CONJ} (\textit{but})      & \fw{maïs} & \term{NOUN} (\textit{maize}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+When a folded lookup resolves to a form that has a homograph, the analyzer emits a
+homograph hint naming both readings instead of choosing one silently -- the user is told
+that \fw{la} was read as a determiner and that \fw{là} exists.
+
+\subsection{Multiword expressions}
+
+\LexiconMultiword\ entries span more than one word (\fw{est-ce que}, \fw{on va faire
+comment}). The lexer indexes them by first word, attempts the longest match first, and
+refuses to match across a punctuation or separator boundary -- so a comma between two words
+prevents them from being glued into one token. This rule is covered by a dedicated
+regression test.
+
+\subsection{Unknown words}
+
+An unrecognised word is not an error and is not discarded. It is emitted as an
+\term{UNKNOWN} token with its source span intact, which produces three useful effects: the
+parser fails at a precise location rather than vaguely; the suggester can offer near
+matches computed over \emph{folded} forms, so an accent slip still finds its target; and
+the reviewer gets a concrete list of vocabulary the lexicon is missing.
+
+The \LexiconCorpus\ corpus-attested entries, each with the statement identifiers that
+justify it, are listed in Appendix~\ref{app:lexicon}.
+
+\section{Token Frequency and Variation}\label{sec:frequency}
+
+Three frequency views are produced for every analysis, and they answer different questions.
+
+\textbf{Raw surface forms} show what people actually typed or said, accents, casing and
+spelling variants included.
+
+\input{generated/freq-raw}
+
+\textbf{Canonical forms} collapse casing and Unicode normalisation differences. Comparing
+this table against the raw one measures orthographic variation directly: a canonical form
+reached by several distinct surface spellings is a documented variant cluster.
+
+\input{generated/freq-canonical}
+
+\textbf{Terminal classes} show the grammatical shape of the data, which is what predicts
+whether a grammar will parse it.
+
+\input{generated/freq-terminal}
+
+\begin{keypoint}[What the variation tells us]
+Variation in this data is not noise to be normalised away. The gap between the raw and
+canonical tables is a measurement of how unstable written Francanglais orthography is,
+and it is precisely the reason the lexer needs a folded fallback tier rather than a single
+exact-match dictionary.
+\end{keypoint}

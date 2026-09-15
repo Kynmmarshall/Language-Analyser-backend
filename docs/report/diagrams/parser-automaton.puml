@@ -1,0 +1,48 @@
+@startuml
+skinparam dpi 160
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam state {
+  BorderColor #1F3864
+  BackgroundColor #EEF2FA
+  FontColor #14213D
+}
+
+[*] --> PUSH
+
+state PUSH : stack = [S, $]
+state PUSH : input = token terminals
+
+state DECIDE : inspect top of stack
+
+state MATCH : top is a terminal
+state MATCH : equal to lookahead?
+
+state EXPAND : top is a nonterminal A
+state EXPAND : consult table[A, lookahead]
+
+state ACCEPT #D5E8D4 : stack and input\nboth reduce to $
+state REJECT_LEX #F8CECC : LEXICAL_UNKNOWN_TOKEN
+state REJECT_SYN #F8CECC : SYNTAX_NO_TABLE_ENTRY\nSYNTAX_TRAILING_INPUT
+state REJECT_LIM #F8CECC : RESOURCE_LIMIT_EXCEEDED
+
+PUSH --> DECIDE
+DECIDE --> MATCH : top is terminal
+DECIDE --> EXPAND : top is nonterminal
+DECIDE --> ACCEPT : stack empty and input empty
+DECIDE --> REJECT_LEX : next token is UNKNOWN
+DECIDE --> REJECT_LIM : step or depth limit hit
+
+MATCH --> DECIDE : pop and advance
+MATCH --> REJECT_SYN : mismatch
+
+EXPAND --> DECIDE : push RHS reversed
+EXPAND --> REJECT_SYN : no table entry
+
+ACCEPT --> [*]
+REJECT_LEX --> [*]
+REJECT_SYN --> [*]
+REJECT_LIM --> [*]
+
+@enduml

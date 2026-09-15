@@ -1,0 +1,108 @@
+\section{Parser Implementation}\label{sec:implementation}
+
+\subsection{Table-driven predictive parsing}
+
+The parser is a classic non-recursive predictive parser driven by the table from
+Section~\ref{sec:syntax}. It is implemented in \texttt{core/parser.py} with no generated
+code and no external parsing library.
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.2em]
+  \item Push \term{\$} and the start symbol \nonterm{S} onto the stack.
+  \item Let $X$ be the stack top and $t$ the current lookahead terminal.
+  \item If $X$ is a terminal: it must equal $t$. Pop, advance, and attach the token to the
+        parse tree. Otherwise \rejected\ with ``expected $X$, found $t$''.
+  \item If $X$ is a nonterminal: look up $[X, t]$. Pop $X$, push the right-hand side in
+        reverse, and record the production identifier in the derivation trace. An empty
+        cell means \rejected\ with the set of terminals that \emph{would} have been legal.
+  \item If $X = \term{\$} = t$, \accepted.
+\end{enumerate}
+
+The parser returns the derivation as an ordered list of applied production identifiers, so
+every accepted statement carries a verifiable proof of \emph{why} it was accepted, and the
+front end can render the parse tree from it.
+
+\diagram{parser-automaton.png}{0.92}{Predictive parser control flow: stack, lookahead,
+table lookup and the three terminating states.}
+
+\subsection{Error reporting}
+
+A rejection is never a bare failure. Because the table records which terminals are legal
+in each state, an empty cell yields the complete expected set, and the token's source span
+gives an exact character offset. \texttt{core/suggest.py} turns this into concrete repairs:
+
+\begin{description}[leftmargin=1.4em, style=nextline, font=\ttfamily]
+  \item[unknown\_word] The word is not in the lexicon. Near matches are computed with
+        \texttt{difflib} over \emph{folded} forms at a 0.6 similarity cut-off, so an accent
+        or spelling slip still finds its target.
+  \item[unexpected\_token] The token is known but ungrammatical here. The message names the
+        expected terminal classes and gives up to three real lexicon words for each, so the
+        user is shown a working sentence rather than a category name.
+  \item[trailing\_input] The statement parsed to completion but tokens remain --
+        typically two clauses run together with no conjunction or separator.
+\end{description}
+
+Homograph hints are emitted alongside: if \fw{la} was resolved as a determiner but \fw{là}
+exists as an adverb, both readings are reported rather than one being chosen silently.
+
+\subsection{Worked trace}
+
+For the statement \fw{le taximan a une voiture}, the lexer produces
+\term{DET NOUN VERB DET NOUN} and the parser runs as follows:
+
+\begin{center}
+\small
+\begin{tabular}{@{}r l l l@{}}
+\toprule
+\textbf{\#} & \textbf{Stack (top first)} & \textbf{Lookahead} & \textbf{Action} \\
+\midrule
+1  & \nonterm{S} \term{\$}                       & \term{DET}  & apply \nonterm{S} $\rightarrow$ \nonterm{Seq} \\
+2  & \nonterm{Seq} \term{\$}                     & \term{DET}  & apply \nonterm{Seq} $\rightarrow$ \nonterm{Unit} \nonterm{Seq$'$} \\
+3  & \nonterm{Unit} \nonterm{Seq$'$} \term{\$}   & \term{DET}  & apply \nonterm{Unit} $\rightarrow$ \nonterm{Clause} \\
+4  & \nonterm{Clause} \ldots                     & \term{DET}  & apply \nonterm{Clause} $\rightarrow$ \nonterm{NP} \nonterm{ClauseTail} \\
+5  & \nonterm{NP} \nonterm{ClauseTail} \ldots    & \term{DET}  & apply \nonterm{NP} $\rightarrow$ \term{DET} \nonterm{NP$'$} \\
+6  & \term{DET} \nonterm{NP$'$} \ldots           & \term{DET}  & match \fw{le} \\
+7  & \nonterm{NP$'$} \ldots                      & \term{NOUN} & apply \nonterm{NP$'$} $\rightarrow$ \term{NOUN} \\
+8  & \term{NOUN} \ldots                          & \term{NOUN} & match \fw{taximan} \\
+9  & \nonterm{ClauseTail} \ldots                 & \term{VERB} & apply \nonterm{ClauseTail} $\rightarrow$ \nonterm{Predicate} \\
+10 & \nonterm{Predicate} \ldots                  & \term{VERB} & apply \nonterm{Predicate} $\rightarrow$ \nonterm{NegOpt} \nonterm{VerbGroup} \nonterm{Comps} \\
+11 & \nonterm{NegOpt} \ldots                     & \term{VERB} & apply \nonterm{NegOpt} $\rightarrow$ $\varepsilon$ \quad(\term{VERB} $\in$ FOLLOW) \\
+12 & \nonterm{VerbGroup} \ldots                  & \term{VERB} & apply \nonterm{VerbGroup} $\rightarrow$ \term{VERB} \nonterm{VerbTail} \\
+13 & \term{VERB} \ldots                          & \term{VERB} & match \fw{a} \\
+14 & \nonterm{VerbTail} \ldots                   & \term{DET}  & apply \nonterm{VerbTail} $\rightarrow$ $\varepsilon$ \\
+15 & \nonterm{Comps} \ldots                      & \term{DET}  & apply \nonterm{Comps} $\rightarrow$ \nonterm{NP} \nonterm{Comps} \\
+16 & \nonterm{NP} \ldots                         & \term{DET}  & \term{DET} \nonterm{NP$'$}, match \fw{une}, \fw{voiture} \\
+17 & \nonterm{Comps} \nonterm{Seq$'$} \term{\$}  & \term{\$}   & \nonterm{Comps} $\rightarrow$ $\varepsilon$, \nonterm{Seq$'$} $\rightarrow$ $\varepsilon$ \\
+18 & \term{\$}                                   & \term{\$}   & \accepted \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note step 11 and step 14: those $\varepsilon$ reductions are only legal because \term{VERB}
+and \term{DET} are in the FOLLOW sets of \nonterm{NegOpt} and \nonterm{VerbTail}
+respectively. This is precisely where the FOLLOW computation earns its place in the
+construction.
+
+\subsection{Pipeline}
+
+\diagram{pipeline.png}{0.95}{End-to-end pipeline from raw statement to analysis snapshot.}
+
+Each stage is a pure function over immutable data: \texttt{scan} $\rightarrow$
+\texttt{lex} $\rightarrow$ \texttt{prepare} $\rightarrow$ \texttt{parse} $\rightarrow$
+\texttt{analyse}. No stage mutates its input, so a snapshot is exactly reproducible from
+the statement text plus the grammar and lexicon versions it was produced under -- both of
+which are stamped into the snapshot.
+
+\subsection{Domain model}
+
+\diagram{class-model.png}{0.98}{Core domain model. All types are frozen pydantic models
+with \texttt{extra="forbid"}.}
+
+Every model is immutable and refuses unknown fields. That is a deliberate defence: a typo
+in a field name raises at construction time rather than silently producing a snapshot with
+a missing attribute, which in a data-analysis pipeline is the difference between a crash
+and a wrong number in this report.
+
+\subsection{Request flow}
+
+\diagram{sequence-analyze.png}{0.95}{Sequence of an analyse request from the browser
+through the API to the parser and back.}

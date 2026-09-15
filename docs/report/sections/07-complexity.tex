@@ -1,0 +1,107 @@
+\section{Why Yaound\'e Communication Is Linguistically Complex}\label{sec:complexity}
+
+The marking scheme asks for a discussion of this question. What follows is argued from the
+measurements in this report rather than from general impressions, because the analyzer
+happens to quantify exactly the properties that make the problem hard.
+
+\subsection{The lexicon is not drawn from one language}
+
+The \LexiconTotal\ entries carry \OriginCount\ distinct donor-language labels: French,
+English, Pidgin, Duala, Beti, Bassa, Bamileke, Fulfulde, Hausa, Bulu, Lingala, German,
+Spanish, mixed coinages, and entries whose origin remains genuinely uncertain
+(Section~\ref{sec:lexical}). A conventional compiler front end assumes one source language
+with one keyword table. Here the keyword table is a \emph{union} of vocabularies that share
+no common orthography, and no single dictionary of any one language would recognise even a
+majority of a typical utterance.
+
+\subsection{Code-mixing happens inside the sentence, not between sentences}
+
+Speakers do not finish a French sentence and begin an English one. They switch
+mid-clause --- a French determiner attached to an English noun governed by a Pidgin verb.
+This defeats the obvious engineering shortcut of detecting the language first and then
+running a monolingual analyzer, because there is no span of text over which a single
+language holds. Our response was to make the donor label a property of the \emph{token}
+rather than of the statement, which is why the analyzer can report a mixing ratio at all.
+
+\subsection{Orthography is unstable because the language is primarily spoken}
+
+Francanglais has no standard written form. The same word appears with and without accents,
+with French or English spelling conventions, and with variable casing --- and because it is
+typed on phones, a typographic apostrophe and an ASCII apostrophe are used
+interchangeably, as are precomposed and decomposed Unicode accents that look identical on
+screen. The gap between the raw-form and canonical-form frequency tables in
+Section~\ref{sec:frequency} is a direct measurement of this instability.
+
+The consequence for the analyzer is that exact string matching is insufficient, which is
+why the lexer needs the folded fallback tier. But folding cannot simply be applied
+everywhere, because in French it destroys real meaning distinctions:
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Pair} & \textbf{Reading A} & \textbf{Reading B} & \textbf{Collapses under folding?} \\
+\midrule
+\fw{a} / \fw{à}     & \term{VERB} \textit{has}  & \term{PREP} \textit{to}     & yes \\
+\fw{la} / \fw{là}   & \term{DET} \textit{the}   & \term{ADV} \textit{there}   & yes \\
+\fw{ou} / \fw{où}   & \term{CONJ} \textit{or}   & \term{ADV} \textit{where}   & yes \\
+\fw{mais} / \fw{maïs} & \term{CONJ} \textit{but} & \term{NOUN} \textit{maize} & yes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All four pairs differ \emph{only} by a diacritic, and each pair spans two different
+terminal classes --- so collapsing them changes the token stream the parser sees, not merely
+the gloss. The design has to be tolerant of accent loss and simultaneously faithful to
+accent meaning. Resolving this tension is the reason for the strict lookup ordering in
+Section~\ref{sec:lexical}: exact matches always win, folding is consulted only on failure,
+and when folding resolves an ambiguous form the user is told both readings exist.
+
+\subsection{Syntax is looser than written French}
+
+Four constructions in the corpus are ungrammatical in standard written French but entirely
+ordinary in speech:
+
+\begin{itemize}[leftmargin=1.4em, itemsep=0.2em]
+  \item \textbf{Clause juxtaposition without a conjunction.} Two independent clauses are
+        joined by a comma, or by nothing at all.
+  \item \textbf{Serial verbs.} Verbs chain directly with no coordination or complementiser.
+  \item \textbf{Subject dropping.} A bare predicate stands as a complete utterance, so the
+        grammar cannot require an \nonterm{NP} before the verb.
+  \item \textbf{Left dislocation.} A topic noun phrase is fronted and then resumed by a
+        pronoun, producing two noun phrases before the verb.
+\end{itemize}
+
+Each of these forced a specific production into the grammar --- \nonterm{Seq} with \term{SEP}
+alternatives, \nonterm{VerbTail}, \nonterm{Clause} $\rightarrow$ \nonterm{Predicate}, and
+\nonterm{ClauseTail} $\rightarrow$ \nonterm{NP} \nonterm{Predicate}. A grammar written from
+a French textbook would reject all four.
+
+\subsection{Frozen multiword expressions}
+
+\LexiconMultiword\ expressions are lexically frozen: \fw{est-ce que}, \fw{on va faire
+comment}. Their meaning is not composed from their parts, so parsing them
+compositionally is both wasteful and wrong. They must be recognised at the lexical level as
+single \term{FORMULA} tokens --- which means the lexer needs longest-match lookahead over
+word sequences, a capability a simple word-at-a-time scanner does not have. It also means
+the lexer must know where clause boundaries are, so that a comma cannot be swallowed into
+the middle of a formula.
+
+\subsection{Discourse particles carry structure}
+
+Interjections such as \fw{ehh}, \fw{ashia} and \fw{wah} open and close a large share of real
+utterances and can constitute a complete turn on their own. In written-language grammars
+interjections are usually discarded as noise. Here they are a terminal (\term{INTJ}) with
+their own productions, because discarding them would misparse the utterances they frame.
+
+\subsection{Summary}
+
+\begin{keypoint}[The core difficulty]
+Yaound\'e urban speech is hard to analyse because none of the simplifying assumptions a
+compiler front end normally relies on hold: there is not one source language, there is not
+one orthography, there is no authoritative dictionary, and the syntax is more permissive
+than any written standard. The engineering answer is not to force the data into a cleaner
+model, but to build a pipeline that records provenance at every level --- donor language per
+token, evidence per lexicon entry, transformation per grammar rule, and production
+identifier per parse step --- so that every claim the analyzer makes can be traced back to
+the observation that justifies it.
+\end{keypoint}

@@ -1,0 +1,35 @@
+@startuml
+skinparam dpi 160
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam ArrowColor #1F3864
+skinparam rectangle {
+  BorderColor #1F3864
+  BackgroundColor #EEF2FA
+  FontColor #14213D
+}
+skinparam database {
+  BorderColor #1F3864
+  BackgroundColor #E8F0E8
+}
+
+left to right direction
+
+rectangle "Browser" as browser {
+  rectangle "React SPA\nAnalyzer / Corpus / Grammar\nStatistics / Export" as spa
+}
+
+rectangle "Team VPS (Docker host)" as vps {
+  rectangle "Nginx\nTLS termination\nreverse proxy" as nginx
+  rectangle "FastAPI\nroutes, auth, CSRF" as api
+  rectangle "Compiler core\nlexer / grammar / LL(1) / parser" as core
+  database "SQLite\nusers, corpus,\nsnapshots" as db
+}
+
+spa -right-> nginx : HTTPS
+nginx -right-> api : loopback :8010
+api -right-> core : tokenize / parse
+api --> db : SQLAlchemy
+
+@enduml
