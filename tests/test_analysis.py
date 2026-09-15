@@ -1,18 +1,14 @@
 """Integration tests wiring the lexer, demo grammar/lexicon, parser, and topic/frequency
 analysis together.
 
-The demo grammar intentionally covers only a small NP/VP/PP clause shape derived from
-real corpus vocabulary. None of the 12 full demo.json statements are expected to be fully
-accepted end to end (they contain far more structure than this small grammar covers) — the
-short sentences below are separately constructed teaching examples, built from the same
-real vocabulary, used to demonstrate that the pipeline genuinely accepts and rejects
-correctly rather than always rejecting.
+The demo grammar intentionally covers only a small NP/VP/PP clause shape plus bare
+interjections and fixed formulas. Longer demo statements carry far more structure than
+it covers and are expected to be rejected; the short sentences below are separately
+constructed teaching examples, built from the same real vocabulary, used to demonstrate
+that the pipeline genuinely accepts and rejects correctly rather than always rejecting.
 """
 
 from __future__ import annotations
-
-import json
-from pathlib import Path
 
 from yaounde_analyzer.core.analysis import (
     PreparedAnalyzer,
@@ -24,9 +20,12 @@ from yaounde_analyzer.core.analysis import (
 from yaounde_analyzer.core.corpus import validate_import
 from yaounde_analyzer.core.lexer import tokenize
 from yaounde_analyzer.core.models import RejectionReason
-from yaounde_analyzer.core.specs import load_demo_grammar, load_demo_lexicon
+from yaounde_analyzer.core.specs import (
+    load_demo_corpus_records,
+    load_demo_grammar,
+    load_demo_lexicon,
+)
 
-DEMO_CORPUS_PATH = Path(__file__).resolve().parent.parent / "data" / "demo.json"
 LEXICON = load_demo_lexicon()
 GRAMMAR = load_demo_grammar()
 ANALYZER = PreparedAnalyzer(LEXICON, GRAMMAR)
@@ -78,7 +77,7 @@ def test_topic_match_shows_its_exact_evidence() -> None:
 
 
 def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> None:
-    records = json.loads(DEMO_CORPUS_PATH.read_text(encoding="utf-8"))
+    records = load_demo_corpus_records()
     revisions = validate_import(records)
     results = analyze_corpus(revisions, ANALYZER)
     assert len(results) == len(records)
@@ -101,7 +100,7 @@ def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> N
 
 
 def test_corpus_statistics_reports_full_lexical_coverage() -> None:
-    records = json.loads(DEMO_CORPUS_PATH.read_text(encoding="utf-8"))
+    records = load_demo_corpus_records()
     revisions = validate_import(records)
     results = analyze_corpus(revisions, ANALYZER)
     stats = compute_statistics(results)

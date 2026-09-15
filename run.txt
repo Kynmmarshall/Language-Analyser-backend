@@ -4,4 +4,4 @@ npm run dev -- --port 5175 --strictPort
 
 
 
-cd "C:\Users\kynm\Desktop\Language Analyser backend"; docker compose build; docker compose up -d; docker compose exec api python scripts/seed_demo.py
+docker compose exec api yaounde-analyzer seed-demo

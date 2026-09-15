@@ -9,11 +9,18 @@ from __future__ import annotations
 import argparse
 import getpass
 import json
+import secrets
 import sys
 from pathlib import Path
 
 from yaounde_analyzer import __version__
-from yaounde_analyzer.api.repository import create_user, get_user_by_username
+from yaounde_analyzer.api.repository import (
+    create_statement,
+    create_user,
+    get_statement_record,
+    get_user_by_username,
+    publish_revision,
+)
 from yaounde_analyzer.api.settings import Settings
 from yaounde_analyzer.core.analysis import (
     PreparedAnalyzer,
@@ -24,8 +31,14 @@ from yaounde_analyzer.core.analysis import (
 from yaounde_analyzer.core.corpus import CorpusImportError, validate_import
 from yaounde_analyzer.core.parser import ParserConfigurationError
 from yaounde_analyzer.core.scope import TARGET_VARIETY
-from yaounde_analyzer.core.specs import load_demo_grammar, load_demo_lexicon
+from yaounde_analyzer.core.specs import (
+    load_demo_corpus_records,
+    load_demo_grammar,
+    load_demo_lexicon,
+)
 from yaounde_analyzer.storage.db import Database
+
+DEMO_COLLECTOR = "demo_fixture"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -60,6 +73,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "provision-user", help="Create a login account (interactive password prompt)"
     )
     provision_parser.add_argument("username")
+
+    subparsers.add_parser(
+        "seed-demo", help="Load and publish the bundled demo corpus into the database"
+    )
 
     return parser
 
@@ -158,6 +175,41 @@ def _cmd_provision_user(username: str) -> int:
         session.close()
 
 
+def _cmd_seed_demo() -> int:
+    settings = Settings.from_env()
+    database = Database.create(settings.database_url)
+    database.init_schema()
+    session = database.session_factory()
+    try:
+        user = get_user_by_username(session, DEMO_COLLECTOR)
+        if user is None:
+            # Owns the fixture rows because the schema requires an owner; the random
+            # password is discarded so the account cannot be signed into.
+            user = create_user(session, DEMO_COLLECTOR, secrets.token_urlsafe(32))
+
+        revisions = validate_import(load_demo_corpus_records())
+        created = 0
+        for revision in revisions:
+            if get_statement_record(session, revision.statement_id) is not None:
+                continue
+            create_statement(
+                session,
+                statement_id=revision.statement_id,
+                source_kind=revision.source_kind,
+                raw_text=revision.raw_text,
+                manual_transcription_attested=revision.manual_transcription_attested,
+                collector_id=revision.collector_id,
+                topics=revision.topics,
+                created_by_user_id=user.id,
+            )
+            publish_revision(session, revision.statement_id, 1)
+            created += 1
+        print(f"Seeded and published {created} statement(s); {len(revisions)} in the fixture.")
+        return 0
+    finally:
+        session.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -170,6 +222,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_corpus_validate(args.path, args.analyze)
     if args.command == "provision-user":
         return _cmd_provision_user(args.username)
+    if args.command == "seed-demo":
+        return _cmd_seed_demo()
     if args.scope:
         print(TARGET_VARIETY)
         return 0

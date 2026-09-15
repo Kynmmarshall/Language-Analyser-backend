@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import unicodedata
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from yaounde_analyzer.core.lexer import UNKNOWN_TERMINAL, tokenize
 from yaounde_analyzer.core.lexicon import EntrySource, LexicalEntry, LexiconSpec
-from yaounde_analyzer.core.specs import load_demo_lexicon
+from yaounde_analyzer.core.specs import load_demo_corpus_records, load_demo_lexicon
 
-DEMO_CORPUS_PATH = Path(__file__).resolve().parent.parent / "data" / "demo.json"
 LEXICON = load_demo_lexicon()
 
 
@@ -92,8 +89,7 @@ def test_decomposed_unicode_input_resolves_to_the_same_lexicon_entry() -> None:
 
 
 def test_full_demo_corpus_tokenizes_with_no_unknown_words() -> None:
-    records = json.loads(DEMO_CORPUS_PATH.read_text(encoding="utf-8"))
-    for record in records:
+    for record in load_demo_corpus_records():
         tokens = tokenize(record["raw_text"], LEXICON)
         unknown = [t.raw for t in tokens if t.terminal == UNKNOWN_TERMINAL]
         assert unknown == [], f"{record['statement_id']} has unrecognized words: {unknown}"

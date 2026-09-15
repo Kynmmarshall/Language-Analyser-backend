@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 from yaounde_analyzer.core.corpus import validate_import
-
-DEMO_FIXTURE_PATH = Path(__file__).resolve().parent.parent / "data" / "demo.json"
+from yaounde_analyzer.core.specs import load_demo_corpus_records
 
 
 def load_demo_records() -> list[dict]:
-    return json.loads(DEMO_FIXTURE_PATH.read_text(encoding="utf-8"))
+    return load_demo_corpus_records()
 
 
 def test_demo_fixture_has_expected_statement_count() -> None:
