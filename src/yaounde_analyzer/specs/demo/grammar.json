@@ -1,10 +1,12 @@
 {
   "version": "demo-2026-09-07",
   "start_symbol": "S",
-  "terminals": ["DET", "NOUN", "PRON", "VERB", "PREP"],
+  "terminals": ["DET", "NOUN", "PRON", "VERB", "PREP", "INTJ", "FORMULA"],
   "nonterminals": ["S", "NP", "VP", "PP"],
   "productions": [
     {"id": "demo.gram.s1", "lhs": "S", "rhs": ["NP", "VP"], "evidence_statement_ids": ["demo-010"], "description": "sentence = noun phrase + verb phrase; attested as a full clause within demo-010 ('on go au school')"},
+    {"id": "demo.gram.s2", "lhs": "S", "rhs": ["INTJ"], "evidence_statement_ids": ["demo-013"], "description": "a bare interjection is a complete utterance, e.g. 'ashia !'"},
+    {"id": "demo.gram.s3", "lhs": "S", "rhs": ["FORMULA"], "evidence_statement_ids": ["demo-014"], "description": "a fixed conversational formula stands alone, e.g. 'on dit quoi'"},
     {"id": "demo.gram.np1", "lhs": "NP", "rhs": ["DET", "NOUN"], "evidence_statement_ids": ["demo-007", "demo-011"], "description": "determiner + noun, e.g. 'le poisson', 'le taximan'"},
     {"id": "demo.gram.np2", "lhs": "NP", "rhs": ["PRON"], "evidence_statement_ids": ["demo-007", "demo-010"], "description": "bare pronoun subject/object, e.g. 'on'"},
     {"id": "demo.gram.np3", "lhs": "NP", "rhs": ["NOUN"], "evidence_statement_ids": ["demo-001", "demo-009"], "description": "bare noun, e.g. 'combi', 'kwatt'"},

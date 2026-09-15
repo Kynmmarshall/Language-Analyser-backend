@@ -16,7 +16,7 @@ def load_demo_records() -> list[dict]:
 
 def test_demo_fixture_has_expected_statement_count() -> None:
     records = load_demo_records()
-    assert 10 <= len(records) <= 15
+    assert 10 <= len(records) <= 200
 
 
 def test_demo_fixture_imports_cleanly_and_is_labelled_demo() -> None:

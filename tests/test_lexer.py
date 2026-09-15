@@ -6,7 +6,11 @@ import json
 import unicodedata
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from yaounde_analyzer.core.lexer import UNKNOWN_TERMINAL, tokenize
+from yaounde_analyzer.core.lexicon import EntrySource, LexicalEntry, LexiconSpec
 from yaounde_analyzer.core.specs import load_demo_lexicon
 
 DEMO_CORPUS_PATH = Path(__file__).resolve().parent.parent / "data" / "demo.json"
@@ -93,6 +97,52 @@ def test_full_demo_corpus_tokenizes_with_no_unknown_words() -> None:
         tokens = tokenize(record["raw_text"], LEXICON)
         unknown = [t.raw for t in tokens if t.terminal == UNKNOWN_TERMINAL]
         assert unknown == [], f"{record['statement_id']} has unrecognized words: {unknown}"
+
+
+def test_interjection_and_formula_entries_tokenize_as_single_units() -> None:
+    assert [(t.canonical, t.terminal) for t in tokenize("Ashia !", LEXICON)] == [
+        ("ashia", "INTJ")
+    ]
+    # The formula wins over the separate 'on' and 'dit' entries that also exist.
+    assert [(t.canonical, t.terminal) for t in tokenize("On dit quoi ?", LEXICON)] == [
+        ("on dit quoi", "FORMULA")
+    ]
+
+
+def test_words_outside_a_formula_still_resolve_on_their_own() -> None:
+    # Adding 'on dit quoi' must not swallow 'on' or 'dit' in unrelated positions.
+    assert [t.canonical for t in tokenize("il dit que on go", LEXICON)] == [
+        "il", "dit", "que", "on", "go",
+    ]
+
+
+def test_corpus_sourced_entries_must_cite_evidence() -> None:
+    corpus_entries = [e for e in LEXICON.entries if e.source is EntrySource.CORPUS]
+    assert corpus_entries, "expected the lexicon to retain corpus-attested entries"
+    for entry in corpus_entries:
+        assert entry.evidence_statement_ids, entry.rule_id
+
+
+def test_dictionary_sourced_entries_are_marked_and_uncited() -> None:
+    dictionary_entries = [e for e in LEXICON.entries if e.source is EntrySource.DICTIONARY]
+    assert dictionary_entries, "expected dictionary-derived entries to be present"
+    for entry in dictionary_entries:
+        assert entry.evidence_statement_ids == (), entry.rule_id
+
+
+def test_a_corpus_entry_without_evidence_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="cites no statement"):
+        LexiconSpec(
+            version="test",
+            entries=(
+                LexicalEntry(
+                    canonical="combi",
+                    terminal="NOUN",
+                    part_of_speech="noun",
+                    rule_id="test.lex.combi",
+                ),
+            ),
+        )
 
 
 def test_tokenizer_always_advances_on_pathological_input() -> None:

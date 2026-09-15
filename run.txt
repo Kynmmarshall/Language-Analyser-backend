@@ -1,3 +1,7 @@
 cd "C:\Users\kynm\Desktop\Language Analyser"
 $env:VITE_API_PROXY_TARGET = "http://127.0.0.1:8010"
 npm run dev -- --port 5175 --strictPort
+
+
+
+cd "C:\Users\kynm\Desktop\Language Analyser backend"; docker compose build; docker compose up -d; docker compose exec api python scripts/seed_demo.py

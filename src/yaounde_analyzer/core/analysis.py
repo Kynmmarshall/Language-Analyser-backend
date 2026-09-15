@@ -26,20 +26,54 @@ from yaounde_analyzer.core.models import (
 )
 from yaounde_analyzer.core.parser import ParserConfigurationError, parse_tokens
 
-# Corpus-driven, evidence-based keyword rules. Each canonical word here is attested in the
-# reviewed demo statements cited in specs/demo/lexicon.json descriptions; a topic is only
-# ever reported together with the exact matched words, never as an opaque classification.
+# Evidence-based keyword rules: a topic is only ever reported together with the exact
+# matched words, never as an opaque classification. Keywords are canonical lexicon forms.
 TOPIC_KEYWORDS: dict[str, frozenset[str]] = {
-    "commuting": frozenset({"taximan", "taco", "course", "va", "waka"}),
+    "commuting": frozenset({
+        "taximan", "taco", "course", "va", "waka", "opep", "ben-sikin", "takesh",
+        "bougna", "gnole", "johnny", "waka-waka", "dangoua", "stationnement", "merco",
+    }),
     "internet": frozenset({"réseau", "message", "send", "phone"}),
     "electricity": frozenset({"courant", "coupé"}),
-    "market_bargaining": frozenset({"prix", "baisse", "nkap", "dos", "buy", "tomates"}),
+    "market_bargaining": frozenset({
+        "prix", "baisse", "nkap", "dos", "buy", "tomates", "mbourou", "bourou", "fafio",
+        "kolo", "tchoko", "farot", "faroter", "njoh", "njoter", "fey", "feyman", "tum",
+        "toum", "niang", "nguémé", "lourd", "mougou", "asso", "bisgo", "gombo",
+    }),
     "rain": frozenset({"pluie"}),
     "fuel": frozenset({"l'essence", "caisse", "à sec"}),
-    "roadside_business": frozenset({"tchop", "poisson"}),
+    "roadside_business": frozenset({
+        "tchop", "poisson", "soya", "aboki", "makala", "beignets", "atchomo",
+        "sauveteur", "chantier", "tourne-dos", "circuit", "appacher",
+    }),
     "bendskin": frozenset({"bendskin"}),
-    "security": frozenset({"vols", "garde"}),
-    "university": frozenset({"school", "prof"}),
+    "security": frozenset({
+        "vols", "garde", "mbéré", "mange-mille", "ngata", "kondengui", "awash",
+        "awasheur", "mazembe", "kick", "tippeur", "hol", "catcham", "bakassi",
+    }),
+    "university": frozenset({
+        "school", "prof", "boilo", "bucher", "buching", "fronter", "front", "bacho",
+        "beco", "probat", "fréquenter", "ngoa", "coraniser", "faxer", "bord", "ndiba",
+        "kilombo", "lewa",
+    }),
+    "food_and_drink": frozenset({
+        "djaf", "djaffer", "damé", "gnama", "grayer", "grayou", "nyama", "cook",
+        "mimbo", "jong", "tongo", "maïs", "conso", "champi", "bissap", "foléré",
+        "sucrerie", "jazz", "paf", "bobolo", "bifaka", "mbunga", "kossam", "fufu",
+    }),
+    "family": frozenset({
+        "mater", "remé", "macho", "pater", "repé", "pacho", "ressé", "refré", "sista",
+        "sita", "tantal", "oncal", "couso", "tchango", "mbindi", "perika", "muna",
+        "pikin", "big-reme", "magnan", "mbombo",
+    }),
+    "greetings": frozenset({
+        "ashia", "abeg", "massa", "ossoko", "how", "pardon", "on dit quoi", "à plus",
+        "i beg", "c'est how", "tu es où", "wetty",
+    }),
+    "nightlife": frozenset({
+        "djoka", "bringuer", "ambiancer", "shaike", "mousse", "ndamba", "guio",
+    }),
+    "housing": frozenset({"piol", "locale", "kam", "mapane", "elobi", "sous-kwat", "ghettosard"}),
 }
 
 

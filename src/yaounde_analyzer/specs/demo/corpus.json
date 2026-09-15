@@ -130,5 +130,115 @@
     "collector_id": "demo-fixture",
     "topics": ["internet", "electricity"],
     "created_at": "2026-01-14T20:15:00Z"
+  },
+  {
+    "statement_id": "demo-013",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Ashia !",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": [],
+    "created_at": "2026-01-15T07:40:00Z"
+  },
+  {
+    "statement_id": "demo-014",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "On dit quoi ?",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": [],
+    "created_at": "2026-01-15T07:42:00Z"
+  },
+  {
+    "statement_id": "demo-015",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Le mbom a tum les beignets au kwatt.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["market_bargaining", "roadside_business"],
+    "created_at": "2026-01-15T08:10:00Z"
+  },
+  {
+    "statement_id": "demo-016",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Je n'ai pas le mbourou, je suis nguémé jusqu'à la fin du mois.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["market_bargaining"],
+    "created_at": "2026-01-15T08:25:00Z"
+  },
+  {
+    "statement_id": "demo-017",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "On va grap au ngola en opep, le ben-sikin est trop cher.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["commuting"],
+    "created_at": "2026-01-15T09:00:00Z"
+  },
+  {
+    "statement_id": "demo-018",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Le djo va djaffer le soya avec le aboki.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["food_and_drink", "roadside_business"],
+    "created_at": "2026-01-15T12:30:00Z"
+  },
+  {
+    "statement_id": "demo-019",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Ma remé dit que le pater va bring le damé à la locale.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["family", "food_and_drink", "housing"],
+    "created_at": "2026-01-15T13:15:00Z"
+  },
+  {
+    "statement_id": "demo-020",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Le mbéré a hol le man au stationnement.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["security", "commuting"],
+    "created_at": "2026-01-15T15:40:00Z"
+  },
+  {
+    "statement_id": "demo-021",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Je go fronter au front, le bacho est ndjindja.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["university"],
+    "created_at": "2026-01-15T17:05:00Z"
+  },
+  {
+    "statement_id": "demo-022",
+    "revision": 1,
+    "source_kind": "demo",
+    "target_variety": "cameroon_francanglais",
+    "raw_text": "Ashia ! Le djoka est bolè, on pousse déjà.",
+    "manual_transcription_attested": false,
+    "collector_id": "demo-fixture",
+    "topics": ["greetings", "nightlife"],
+    "created_at": "2026-01-15T22:50:00Z"
   }
 ]

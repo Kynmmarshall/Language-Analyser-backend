@@ -2,17 +2,28 @@
 
 Regex scanning (see text.py) finds candidate word/number spans; this module defines
 the vocabulary that classifies those spans into Francanglais terminals and part-of-speech
-tags. Coverage is corpus-driven: an entry only exists here because it is attested in a
-reviewed statement, not because it completes a general-purpose French or English lexicon.
+tags. Entries carry a `source` recording how they were admitted: `corpus` entries exist
+because a reviewed statement attests them, `dictionary` entries come from a published
+reference work. The distinction is kept explicit so a reader can tell field evidence
+apart from borrowed lexicography.
 """
 
 from __future__ import annotations
+
+from enum import StrEnum
 
 from pydantic import Field, model_validator
 
 from yaounde_analyzer.core.models import LanguageLabel
 from yaounde_analyzer.core.scope import FrancanglaisModel
 from yaounde_analyzer.core.text import canonicalize_word
+
+
+class EntrySource(StrEnum):
+    """How an entry earned its place in the lexicon."""
+
+    CORPUS = "corpus"
+    DICTIONARY = "dictionary"
 
 
 class LexicalEntry(FrancanglaisModel):
@@ -25,6 +36,7 @@ class LexicalEntry(FrancanglaisModel):
     language_candidates: tuple[LanguageLabel, ...] = (LanguageLabel.UNCERTAIN,)
     rule_id: str
     evidence_statement_ids: tuple[str, ...] = ()
+    source: EntrySource = EntrySource.CORPUS
     description: str = ""
 
     @property
@@ -63,6 +75,10 @@ class LexiconSpec(FrancanglaisModel):
             if entry.rule_id in seen_rule_ids:
                 raise ValueError(f"duplicate lexicon rule_id {entry.rule_id!r}")
             seen_rule_ids.add(entry.rule_id)
+            if entry.source is EntrySource.CORPUS and not entry.evidence_statement_ids:
+                raise ValueError(
+                    f"entry {entry.rule_id!r} claims corpus attestation but cites no statement"
+                )
         return self
 
     def single_word_lookup(self) -> dict[str, LexicalEntry]:

@@ -94,9 +94,10 @@ def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> N
         # but must never miss a topic a human reviewer already confirmed.
         assert hand_labels <= detected, (record["statement_id"], hand_labels, detected)
 
-    # This small demo grammar is not expected to fully accept any real, full statement —
-    # only the short constructed sentences above exercise a successful ACCEPT.
-    assert all(not result.parse.accepted for result in results)
+    # Only single-token utterances (a bare interjection, a fixed formula) are complete
+    # sentences under this small grammar; the longer statements are still rejected.
+    accepted = {r.statement_revision_id.split("@")[0] for r in results if r.parse.accepted}
+    assert accepted == {"demo-013", "demo-014"}
 
 
 def test_corpus_statistics_reports_full_lexical_coverage() -> None:
@@ -105,8 +106,8 @@ def test_corpus_statistics_reports_full_lexical_coverage() -> None:
     results = analyze_corpus(revisions, ANALYZER)
     stats = compute_statistics(results)
 
-    assert stats.statement_count == 12
+    assert stats.statement_count == len(records)
     assert stats.unknown_words == ()
-    assert stats.rejected_count == 12
-    assert stats.canonical_frequency["kwatt"] == 4  # demo-001, 003, 008, 009
+    assert stats.accepted_count + stats.rejected_count == stats.statement_count
+    assert stats.canonical_frequency["kwatt"] == 5  # demo-001, 003, 008, 009, 015
     assert stats.raw_frequency["Combi"] == 3  # capitalized in demo-001, 002, 007
