@@ -1,0 +1,31 @@
+# Production overrides. Used together with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Values come from .env (gitignored). Copy .env.example to .env and fill it in.
+services:
+  api:
+    environment:
+      YAOUNDE_ENV: production
+      YAOUNDE_DATABASE_URL: sqlite:////app/data/app.db
+      # Must match the public origin exactly. The app's same-origin check compares the
+      # browser's Origin header against this list; behind Nginx it cannot infer the
+      # public HTTPS origin on its own, so omitting this breaks login with a 403.
+      YAOUNDE_CORS_ORIGINS: ${PUBLIC_ORIGIN}
+      YAOUNDE_SIGNUP_CODE: ${YAOUNDE_SIGNUP_CODE}
+      YAOUNDE_SESSION_SECONDS: ${YAOUNDE_SESSION_SECONDS:-28800}
+    # Honour X-Forwarded-Proto/For from Nginx so the app sees the real scheme and client IP.
+    command:
+      - uvicorn
+      - yaounde_analyzer.api.asgi:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
