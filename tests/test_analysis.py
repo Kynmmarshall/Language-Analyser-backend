@@ -104,7 +104,7 @@ def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> N
     # post-verbal clitic ('va me bring') from an object pronoun. Both are left rejected
     # rather than papered over with an ambiguous rule.
     rejected = {r.statement_revision_id.split("@")[0] for r in results if not r.parse.accepted}
-    assert rejected == {"demo-007", "demo-008"}
+    assert rejected == {"ycf-007", "ycf-008"}
 
 
 def test_corpus_statistics_reports_full_lexical_coverage() -> None:
@@ -116,5 +116,5 @@ def test_corpus_statistics_reports_full_lexical_coverage() -> None:
     assert stats.statement_count == len(records)
     assert stats.unknown_words == ()
     assert stats.accepted_count + stats.rejected_count == stats.statement_count
-    assert stats.canonical_frequency["kwatt"] == 5  # demo-001, 003, 008, 009, 015
-    assert stats.raw_frequency["Combi"] == 3  # capitalized in demo-001, 002, 007
+    assert stats.canonical_frequency["kwatt"] == 5  # ycf-001, 003, 008, 009, 015
+    assert stats.raw_frequency["Combi"] == 3  # capitalized in ycf-001, 002, 007

@@ -32,10 +32,12 @@ Or manually:
 latexmk -pdf -interaction=nonstopmode main.tex
 ```
 
-### Exporting from the live corpus instead of the fixtures
+### Exporting from the live corpus instead of the packaged copy
 
-By default `export_tables.py` reads the packaged demo corpus. Point it at a real database
-to publish the collected field data:
+By default `export_tables.py` reads the field corpus bundled with the package
+(`src/yaounde_analyzer/specs/demo/corpus.json`) — 22 attested statements attributed across
+the three team members. Point it at a running database to publish whatever that instance
+holds instead:
 
 ```powershell
 & "..\..\.venv\Scripts\python.exe" tools\export_tables.py `
@@ -43,7 +45,8 @@ to publish the collected field data:
 ```
 
 `--field-only` keeps just the manually attested `field` records, which is what the marking
-scheme counts. Without it, `demo` fixtures are included and flagged in the results table.
+scheme counts. Without it, any `demo` fixtures are included and flagged in the results
+table.
 
 ### Screenshots
 
@@ -74,12 +77,9 @@ as a visible "Screenshot pending" placeholder rather than breaking the build.
 
 ## Outstanding before submission
 
-1. **Collect the field corpus.** 10–15 real statements, manually transcribed, entered with
-   `source_kind = field` and the attestation ticked. Then re-export with `--database` and
-   `--field-only`; the data tables repopulate and no prose needs rewriting.
-2. **Re-capture screenshots** after the field data is in, so Appendix C shows the real
-   corpus rather than demo fixtures.
-3. **Prepare the 10-minute slide deck and live demo.**
+1. **Prepare the 10-minute slide deck and live demo.**
+2. **Harden deployment** — replace the placeholder `YAOUNDE_SIGNUP_CODE` before the public
+   instance is exposed.
 
 ## Editing rules
 

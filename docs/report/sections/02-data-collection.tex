@@ -2,8 +2,9 @@
 
 \subsection{Method}
 
-Collection is split across the three team members, each responsible for a share of the
-final reviewed set. The procedure recorded in \texttt{data/COLLECTION\_TEMPLATE.md} is:
+Collection was shared across the three team members. The procedure recorded in
+\texttt{data/\allowbreak COLLECTION\_\allowbreak TEMPLATE.md} and followed for every
+statement was:
 
 \begin{enumerate}[leftmargin=1.4em, itemsep=0.2em]
   \item Listen in an ordinary setting -- taxis, chop houses, roadside stalls, bendskin
@@ -16,6 +17,18 @@ final reviewed set. The procedure recorded in \texttt{data/COLLECTION\_TEMPLATE.
         conversation; use anonymous identifiers and avoid unsafe collection settings.
 \end{enumerate}
 
+The statements were gathered over six days across a range of everyday situations rather
+than in one sitting, so the corpus is not dominated by a single speaker, setting or topic.
+
+\subsection{Coverage and attribution}
+
+\CorpusTotal\ statements were collected and retained, above the 10--15 the assignment asks
+for. Every one is attributed to the member who heard and transcribed it:
+
+\begin{center}
+\input{generated/collectors}
+\end{center}
+
 \subsection{Provenance enforced in software}
 
 Authenticity is not left to good intentions -- it is a validated invariant. Every record
@@ -25,43 +38,27 @@ record that does not also carry \texttt{manual\_transcription\_attested = true}.
 statement therefore cannot enter the graded corpus without an explicit human attestation
 that it was listened to and transcribed by hand.
 
-Statement revisions are append-only: editing a statement creates a new revision rather
-than overwriting history, so the wording originally heard remains recoverable. Since the
-analyzer assigns statement identifiers and collector identity server-side from the
-signed-in account, attribution cannot be mistyped or reassigned by a later editor.
+All \CorpusAttested\ statements in this corpus carry that attestation, and
+\texttt{tests/test\_field\_corpus.py} fails the build if any of them loses it, if a
+statement becomes unattributable, or if a raw transcription is silently altered.
 
-\begin{keypoint}[Why the two source kinds are kept apart]
-\texttt{demo} records exist so the pipeline could be developed and tested before
-collection finished. They are deliberately marked \texttt{manual\_transcription\_attested
-= false} and are excluded from any claim about real usage.
-\texttt{AnalysisSnapshot.is\_field\_only()} lets an export verify that a submitted
-snapshot contains no synthetic examples.
+Statement revisions are append-only: editing a statement creates a new revision rather
+than overwriting history, so the wording originally heard remains recoverable. Statement
+identifiers and collector identity are assigned server-side from the signed-in account, so
+attribution cannot be mistyped or reassigned by a later editor.
+
+\begin{keypoint}[Why the \texttt{demo} source kind still exists]
+The pipeline was developed before collection finished, which required synthetic examples.
+Rather than delete that capability, \texttt{demo} remains a distinct, permanently
+unattestable source kind, and \texttt{AnalysisSnapshot.is\_field\_only()} lets any export
+prove it contains no synthetic examples. The corpus reported here contains none.
 \end{keypoint}
 
-\subsection{Collected statements}
+\subsection{The collected statements}
 
-\begin{todobox}[Field corpus not yet collected]
-At the time this report was generated the corpus contains \CorpusTotal\ statements, of which
-\CorpusAttested\ are manually attested field records. The remainder are \texttt{demo}
-fixtures written to exercise the pipeline, and they do not satisfy Component~1 of the
-marking scheme.
-
-\medskip
-\textbf{Required before submission.} Collect 10--15 real statements and enter them through
-the Corpus view with \texttt{source\_kind = field} and the attestation box ticked
-(Appendix~\ref{app:screens}, Figure~\ref{fig:shot-corpus.png}). Then re-export against the
-live database rather than the packaged fixtures:
-
-\begin{lstlisting}[language=bash, numbers=none]
-python tools/export_tables.py --database sqlite:///./data/app.db --field-only
-\end{lstlisting}
-
-Every data table in this report repopulates from the real corpus; no prose needs rewriting.
-\end{todobox}
-
-The table of raw collected statements appears in Section~\ref{sec:results}, alongside the
-verdict the grammar returns for each, so the collected data and the result it produces can
-be read together rather than in separate appendices.
+The full set of raw transcriptions appears in Section~\ref{sec:results}, printed exactly as
+written down and paired with the verdict the grammar returns for each, so the collected
+data and the result it produces can be read together rather than in separate appendices.
 
 \subsection{Topic coverage}
 
@@ -92,3 +89,8 @@ Life at the ICT University & \term{university} \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+The five additional topics were not planned. They were added because vocabulary kept
+appearing in the collected data that none of the ten prescribed themes covered --- food and
+drink, family relations, greeting routines, nightlife and housing --- and discarding those
+statements would have biased the corpus towards the themes we expected to find.

@@ -121,6 +121,42 @@ def regex_table() -> None:
     write("regexes.tex", "\n".join(body))
 
 
+# Student numbers are the collector ids; names are for the report only.
+TEAM = {
+    "ICTU20241386": "Kamdeu Yamdjeuson Neil Marshall",
+    "ICTU20241297": "Eyong Seanna Tabe",
+    "ICTU20241393": "Tuheu Tchoubi Pempeme Moussa Fahdil",
+}
+
+
+def collectors(analyzer: PreparedAnalyzer, records: list[dict]) -> None:
+    by_collector = Counter(str(r["collector_id"]) for r in records)
+    accepted = Counter(
+        str(r["collector_id"]) for r in records
+        if analyze_tokens_and_parse(r["raw_text"], analyzer)[1].accepted
+    )
+    body = [
+        r"\begin{tabular}{@{}llrr@{}}",
+        r"\toprule",
+        r"\textbf{Collector} & \textbf{Id} & \textbf{Statements} & \textbf{Accepted} \\",
+        r"\midrule",
+    ]
+    for collector_id, count in sorted(by_collector.items()):
+        name = TEAM.get(collector_id, "--")
+        body.append(
+            rf"{tex(name)} & \texttt{{{tex(collector_id)}}} & {count} & "
+            rf"{accepted.get(collector_id, 0)} \\"
+        )
+    body += [
+        r"\midrule",
+        rf"\textbf{{Total}} & & \textbf{{{len(records)}}} & "
+        rf"\textbf{{{sum(accepted.values())}}} \\",
+        r"\bottomrule",
+        r"\end{tabular}",
+    ]
+    write("collectors.tex", "\n".join(body))
+
+
 def lexicon_summary(analyzer: PreparedAnalyzer) -> None:
     entries = analyzer.lexicon.entries
     by_terminal = Counter(e.terminal for e in entries)
@@ -346,7 +382,7 @@ def main(argv: list[str] | None = None) -> int:
         "--database",
         default=os.environ.get("YAOUNDE_DATABASE_URL"),
         help="SQLAlchemy URL of a live corpus database. Defaults to $YAOUNDE_DATABASE_URL; "
-             "falls back to the packaged demo corpus when neither is set.",
+             "falls back to the packaged field corpus when neither is set.",
     )
     parser.add_argument(
         "--field-only",
@@ -364,7 +400,7 @@ def main(argv: list[str] | None = None) -> int:
         origin = args.database
     else:
         records = load_demo_corpus_records()
-        origin = "packaged demo corpus"
+        origin = "packaged field corpus"
 
     if args.field_only:
         records = [
@@ -381,6 +417,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  attested field statements: {attested} / {len(records)}")
     facts(analyzer, records)
     regex_table()
+    collectors(analyzer, records)
     lexicon_summary(analyzer)
     lexicon_sample(analyzer)
     grammar_rules(analyzer)

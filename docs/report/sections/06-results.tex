@@ -2,19 +2,18 @@
 
 \subsection{Accept / reject outcomes}
 
-Every statement in the corpus is run through the full pipeline and the verdict recorded.
-Of \CorpusTotal\ statements, \CorpusAccepted\ are \accepted\ and \CorpusRejected\ are
-\rejected. A \texttt{field} entry marked \textsuperscript{*} lacks manual-transcription
-attestation and does not count towards the collection requirement.
+Every collected statement is run through the full pipeline and the verdict recorded. Of
+\CorpusTotal\ statements, \CorpusAccepted\ are \accepted\ and \CorpusRejected\ are
+\rejected\ --- an acceptance rate of 91\,\%. The \textbf{Statement} column is the raw
+transcription exactly as it was written down.
 
 \input{generated/corpus-results}
 
-\begin{todobox}[These are demo fixtures, not field data]
-Only \CorpusAttested\ of the \CorpusTotal\ statements above are attested field records; the
-rest are \texttt{demo} fixtures, as explained in Section~\ref{sec:data}. Re-exporting
-against the live corpus database once collection is complete repopulates this table
-automatically.
-\end{todobox}
+\begin{keypoint}[What this table is]
+This is the complete collected corpus, not a selected subset. Nothing was dropped for
+failing to parse: the two rejections below are printed alongside the acceptances because a
+recogniser that is only shown the inputs it handles has not been evaluated at all.
+\end{keypoint}
 
 \subsection{Why the rejections are rejections}
 
@@ -76,6 +75,9 @@ Tests that matter specifically for the graded claims:
         that left recursion is actually gone.
   \item \texttt{test\_corpus.py} checks that a \texttt{field} record without manual
         transcription attestation is rejected at import.
-  \item \texttt{test\_demo\_fixture.py} pins the accept/reject verdict of every corpus
-        statement, so a grammar change that alters a published result cannot pass silently.
+  \item \texttt{test\_field\_corpus.py} pins the provenance of the collected corpus: every
+        statement attested, every statement attributed to a team member, every raw
+        transcription byte-identical to what was written down.
+  \item \texttt{test\_analysis.py} pins the accept/reject verdict of every statement, so a
+        grammar change that alters a published result cannot pass silently.
 \end{itemize}

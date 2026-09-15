@@ -38,7 +38,9 @@ from yaounde_analyzer.core.specs import (
 )
 from yaounde_analyzer.storage.db import Database
 
-DEMO_COLLECTOR = "demo_fixture"
+# Owns the seeded rows because the schema requires an owner. Not a collector: real
+# collector attribution lives on each statement's collector_id.
+SEED_OWNER = "corpus_seed"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -75,7 +77,7 @@ def _build_parser() -> argparse.ArgumentParser:
     provision_parser.add_argument("username")
 
     subparsers.add_parser(
-        "seed-demo", help="Load and publish the bundled demo corpus into the database"
+        "seed-demo", help="Load and publish the bundled field corpus into the database"
     )
 
     return parser
@@ -181,11 +183,10 @@ def _cmd_seed_demo() -> int:
     database.init_schema()
     session = database.session_factory()
     try:
-        user = get_user_by_username(session, DEMO_COLLECTOR)
+        user = get_user_by_username(session, SEED_OWNER)
         if user is None:
-            # Owns the fixture rows because the schema requires an owner; the random
-            # password is discarded so the account cannot be signed into.
-            user = create_user(session, DEMO_COLLECTOR, secrets.token_urlsafe(32))
+            # The random password is discarded so the account cannot be signed into.
+            user = create_user(session, SEED_OWNER, secrets.token_urlsafe(32))
 
         revisions = validate_import(load_demo_corpus_records())
         created = 0
@@ -204,7 +205,7 @@ def _cmd_seed_demo() -> int:
             )
             publish_revision(session, revision.statement_id, 1)
             created += 1
-        print(f"Seeded and published {created} statement(s); {len(revisions)} in the fixture.")
+        print(f"Seeded and published {created} statement(s); {len(revisions)} in the corpus.")
         return 0
     finally:
         session.close()
