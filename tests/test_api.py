@@ -5,6 +5,7 @@ with revision conflicts and the public/private projection boundary.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from dataclasses import replace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -88,6 +89,106 @@ def test_login_rejects_a_mismatched_cross_origin_request(client: TestClient) -> 
 
 def test_me_requires_authentication(client: TestClient) -> None:
     assert client.get("/api/auth/me").status_code == 401
+
+
+# --- Signup --------------------------------------------------------------------------------
+
+
+SIGNUP_CODE = "team-code-for-tests"
+
+
+@pytest.fixture
+def signup_client(database: Database, settings: Settings, user: User) -> Iterator[TestClient]:
+    del user
+    app = create_app(
+        settings=replace(settings, signup_code=SIGNUP_CODE), database=database
+    )
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+def test_signup_is_disabled_by_default(client: TestClient) -> None:
+    assert client.get("/api/auth/signup").json() == {"enabled": False}
+    response = client.post(
+        "/api/auth/signup",
+        json={"username": "newbie", "password": "a-long-enough-password", "signup_code": "x"},
+    )
+    assert response.status_code == 403
+
+
+def test_signup_reports_enabled_when_configured(signup_client: TestClient) -> None:
+    assert signup_client.get("/api/auth/signup").json() == {"enabled": True}
+
+
+def test_signup_creates_a_user_and_signs_them_in(signup_client: TestClient) -> None:
+    response = signup_client.post(
+        "/api/auth/signup",
+        json={
+            "username": "newbie",
+            "password": "a-long-enough-password",
+            "signup_code": SIGNUP_CODE,
+        },
+    )
+    assert response.status_code == 201
+    assert response.json() == {"username": "newbie"}
+    assert signup_client.cookies.get("session") is not None
+    assert signup_client.get("/api/auth/me").json() == {"username": "newbie"}
+
+
+def test_signup_rejects_a_wrong_code(signup_client: TestClient) -> None:
+    response = signup_client.post(
+        "/api/auth/signup",
+        json={
+            "username": "newbie",
+            "password": "a-long-enough-password",
+            "signup_code": "not-the-code",
+        },
+    )
+    assert response.status_code == 403
+    assert signup_client.cookies.get("session") is None
+
+
+def test_signup_rejects_a_duplicate_username(signup_client: TestClient) -> None:
+    response = signup_client.post(
+        "/api/auth/signup",
+        json={
+            "username": "alice",
+            "password": "a-long-enough-password",
+            "signup_code": SIGNUP_CODE,
+        },
+    )
+    assert response.status_code == 409
+
+
+def test_signup_enforces_password_and_username_rules(signup_client: TestClient) -> None:
+    short_password = signup_client.post(
+        "/api/auth/signup",
+        json={"username": "newbie", "password": "short", "signup_code": SIGNUP_CODE},
+    )
+    assert short_password.status_code == 422
+
+    bad_username = signup_client.post(
+        "/api/auth/signup",
+        json={
+            "username": "has spaces",
+            "password": "a-long-enough-password",
+            "signup_code": SIGNUP_CODE,
+        },
+    )
+    assert bad_username.status_code == 422
+
+
+def test_signup_rejects_a_cross_origin_request(signup_client: TestClient) -> None:
+    response = signup_client.post(
+        "/api/auth/signup",
+        json={
+            "username": "newbie",
+            "password": "a-long-enough-password",
+            "signup_code": SIGNUP_CODE,
+        },
+        headers={"origin": "http://evil.example"},
+    )
+    assert response.status_code == 403
 
 
 def test_me_returns_username_after_login(client: TestClient) -> None:
@@ -224,11 +325,77 @@ def test_creating_a_duplicate_statement_id_is_rejected(client: TestClient) -> No
         "/api/corpus",
         json={
             "statement_id": "s-001", "source_kind": "demo", "raw_text": "Autre texte.",
-            "manual_transcription_attested": False, "collector_id": "alice", "topics": [],
+            "manual_transcription_attested": False, "topics": [],
         },
         headers=csrf_headers(client),
     )
     assert response.status_code == 409
+
+
+def test_statement_id_and_collector_are_assigned_when_omitted(client: TestClient) -> None:
+    login(client)
+    response = client.post(
+        "/api/corpus",
+        json={
+            "source_kind": "field", "raw_text": "Le taximan waka.",
+            "manual_transcription_attested": True, "topics": [],
+        },
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["statement_id"] == "field-001"
+    assert body["collector_id"] == "alice"
+
+
+def test_generated_statement_ids_increment_per_source_kind(client: TestClient) -> None:
+    login(client)
+
+    def create(source_kind: str) -> str:
+        response = client.post(
+            "/api/corpus",
+            json={
+                "source_kind": source_kind, "raw_text": "Combi va au kwatt.",
+                "manual_transcription_attested": source_kind == "field", "topics": [],
+            },
+            headers=csrf_headers(client),
+        )
+        assert response.status_code == 201
+        return response.json()["statement_id"]
+
+    assert create("field") == "field-001"
+    assert create("field") == "field-002"
+    assert create("demo") == "demo-001"
+
+
+def test_collector_id_cannot_be_spoofed_on_create(client: TestClient) -> None:
+    login(client)
+    response = client.post(
+        "/api/corpus",
+        json={
+            "source_kind": "field", "raw_text": "Le taximan waka.",
+            "manual_transcription_attested": True, "collector_id": "somebody-else",
+            "topics": [],
+        },
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 201
+    assert response.json()["collector_id"] == "alice"
+
+
+def test_editing_keeps_the_original_collector_when_omitted(client: TestClient) -> None:
+    login(client)
+    _create_statement(client)
+    response = client.patch(
+        "/api/corpus/s-001",
+        json={
+            "expected_revision": 1, "raw_text": "Le taximan waka.", "source_kind": "field",
+            "manual_transcription_attested": True, "topics": [],
+        },
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 200
+    assert response.json()["collector_id"] == "alice"
 
 
 def test_updating_with_the_correct_expected_revision_succeeds(client: TestClient) -> None:

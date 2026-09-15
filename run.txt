@@ -1,0 +1,3 @@
+cd "C:\Users\kynm\Desktop\Language Analyser"
+$env:VITE_API_PROXY_TARGET = "http://127.0.0.1:8010"
+npm run dev -- --port 5175 --strictPort
