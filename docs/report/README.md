@@ -32,6 +32,34 @@ Or manually:
 latexmk -pdf -interaction=nonstopmode main.tex
 ```
 
+### Exporting from the live corpus instead of the fixtures
+
+By default `export_tables.py` reads the packaged demo corpus. Point it at a real database
+to publish the collected field data:
+
+```powershell
+& "..\..\.venv\Scripts\python.exe" tools\export_tables.py `
+    --database "sqlite:///../../data/app.db" --field-only
+```
+
+`--field-only` keeps just the manually attested `field` records, which is what the marking
+scheme counts. Without it, `demo` fixtures are included and flagged in the results table.
+
+### Screenshots
+
+Appendix C's figures are captured from the running application by a script in the
+**front-end** repository. With the dev server on 5175 and the API reachable:
+
+```powershell
+cd "..\..\..\Language Analyser"
+$env:REPORT_BASE_URL="http://localhost:5175"
+$env:REPORT_USER="<collector>"; $env:REPORT_PASS="<password>"
+node scripts/capture-report-screenshots.mjs
+```
+
+It writes the eight `shot-*.png` files straight into `figures/`. Any missing file renders
+as a visible "Screenshot pending" placeholder rather than breaking the build.
+
 ## Layout
 
 | Path | Contents |
@@ -47,11 +75,10 @@ latexmk -pdf -interaction=nonstopmode main.tex
 ## Outstanding before submission
 
 1. **Collect the field corpus.** 10–15 real statements, manually transcribed, entered with
-   `source_kind = field` and the attestation ticked. Then re-run `export_tables.py`; the
-   data tables repopulate automatically and no prose needs rewriting.
-2. **Add screenshots.** Drop PNGs into `figures/` using the filenames listed in
-   Appendix C (`shot-analyser.png`, `shot-tokens.png`, …). Missing files render as a
-   visible "Screenshot pending" placeholder, so it is obvious what is still outstanding.
+   `source_kind = field` and the attestation ticked. Then re-export with `--database` and
+   `--field-only`; the data tables repopulate and no prose needs rewriting.
+2. **Re-capture screenshots** after the field data is in, so Appendix C shows the real
+   corpus rather than demo fixtures.
 3. **Prepare the 10-minute slide deck and live demo.**
 
 ## Editing rules

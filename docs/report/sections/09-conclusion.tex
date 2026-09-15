@@ -42,10 +42,9 @@ prevents a fix. A grammar that accepts everything distinguishes nothing.
         transcribed by hand, cross-checked by a second member, and entered with
         \texttt{source\_kind = field} and the attestation recorded. This is the single
         outstanding graded component.
-  \item \textbf{Re-export.} Run \texttt{python tools/export\_tables.py} afterwards; all
-        data tables in this report regenerate from the real corpus.
-  \item \textbf{Screenshots.} Replace the placeholders in Appendix~\ref{app:screens} with
-        captures of the running analyzer.
+  \item \textbf{Re-export against the live corpus.} Run
+        \texttt{python tools/export\_tables.py -{}-database <url> -{}-field-only}
+        afterwards; all data tables in this report regenerate from the real corpus.
   \item \textbf{Presentation.} Prepare the ten-minute slide deck and live demonstration.
   \item \textbf{Deployment hardening.} Replace the placeholder signup code before the
         public instance is exposed.

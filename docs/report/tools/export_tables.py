@@ -11,6 +11,8 @@ here into generated/*.tex and \\input by the report, so it cannot go stale.
 
 from __future__ import annotations
 
+import argparse
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -75,6 +77,10 @@ def facts(analyzer: PreparedAnalyzer, records: list[dict]) -> None:
         "CorpusTotal": len(records),
         "CorpusAccepted": accepted,
         "CorpusRejected": len(records) - accepted,
+        "CorpusAttested": sum(
+            1 for r in records
+            if r["source_kind"] == "field" and r["manual_transcription_attested"]
+        ),
         "TopicCount": len(TOPIC_KEYWORDS),
         "OriginCount": len({str(c) for e in lexicon.entries for c in e.language_candidates}),
         "GrammarVersion": tex(grammar.version),
@@ -87,11 +93,13 @@ def facts(analyzer: PreparedAnalyzer, records: list[dict]) -> None:
 
 def regex_table() -> None:
     rows = [
-        ("WORD", text_module._WORD_RE.pattern, "Letters and combining accents, with internal apostrophes or hyphens"),
+        ("WORD", text_module._WORD_RE.pattern,
+         "Letters and combining accents, with internal apostrophes or hyphens"),
         ("NUMBER", text_module._NUMBER_RE.pattern, "A run of digits"),
         ("SPACE", text_module._SPACE_RE.pattern, "Horizontal whitespace only"),
         ("NEWLINE", text_module._NEWLINE_RE.pattern, "One or more line breaks"),
-        ("PUNCTUATION", text_module._PUNCTUATION_RE.pattern, "Sentence and clause marks, including guillemets"),
+        ("PUNCTUATION", text_module._PUNCTUATION_RE.pattern,
+         "Sentence and clause marks, including guillemets"),
     ]
     body = [
         r"\begin{table}[htbp]",
@@ -125,7 +133,9 @@ def lexicon_summary(analyzer: PreparedAnalyzer) -> None:
     ]
     for terminal, count in sorted(by_terminal.items(), key=lambda kv: -kv[1]):
         example = next(e.canonical for e in entries if e.terminal == terminal)
-        body.append(rf"{terminal} & {count} & {slang.get(terminal, 0)} & \texttt{{{tex(example)}}} \\")
+        body.append(
+            rf"{terminal} & {count} & {slang.get(terminal, 0)} & \texttt{{{tex(example)}}} \\"
+        )
     body += [
         r"\midrule",
         rf"\textbf{{Total}} & \textbf{{{len(entries)}}} & \textbf{{{sum(slang.values())}}} & \\",
@@ -136,7 +146,8 @@ def lexicon_summary(analyzer: PreparedAnalyzer) -> None:
 
     origins = Counter(str(c) for e in entries for c in e.language_candidates)
     rows = [
-        rf"{tex(name)} & {count} \\" for name, count in sorted(origins.items(), key=lambda kv: -kv[1])
+        rf"{tex(name)} & {count} \\"
+        for name, count in sorted(origins.items(), key=lambda kv: -kv[1])
     ]
     write(
         "origin-summary.tex",
@@ -151,14 +162,18 @@ def lexicon_summary(analyzer: PreparedAnalyzer) -> None:
 def lexicon_sample(analyzer: PreparedAnalyzer) -> None:
     """A readable slice: the corpus-attested entries, which are the graded evidence."""
     entries = [e for e in analyzer.lexicon.entries if e.source is EntrySource.CORPUS]
+    head = (
+        r"\textbf{Canonical} & \textbf{Terminal} & \textbf{POS} & \textbf{Origin} & "
+        r"\textbf{Attested in} \\"
+    )
     body = [
         r"\begin{longtable}{@{}llll p{0.30\linewidth}@{}}",
         r"\toprule",
-        r"\textbf{Canonical} & \textbf{Terminal} & \textbf{POS} & \textbf{Origin} & \textbf{Attested in} \\",
+        head,
         r"\midrule",
         r"\endfirsthead",
         r"\toprule",
-        r"\textbf{Canonical} & \textbf{Terminal} & \textbf{POS} & \textbf{Origin} & \textbf{Attested in} \\",
+        head,
         r"\midrule",
         r"\endhead",
         r"\bottomrule",
@@ -252,23 +267,29 @@ def ll1_table(analyzer: PreparedAnalyzer) -> None:
         row = []
         for terminal in terminals:
             production_id = cells.get((nonterminal, terminal))
-            row.append(rf"\tiny\texttt{{{tex(production_id.split('.')[-1])}}}" if production_id else "")
+            cell = rf"\tiny\texttt{{{tex(production_id.split('.')[-1])}}}" if production_id else ""
+            row.append(cell)
         body.append(rf"\texttt{{{tex(nonterminal)}}} & " + " & ".join(row) + r" \\")
     body.append(r"\end{longtable}")
     write("ll1-table.tex", "\n".join(body))
 
 
 def corpus_results(analyzer: PreparedAnalyzer, records: list[dict]) -> None:
-    body = [r"\begin{longtable}{@{}l p{0.44\linewidth} c p{0.22\linewidth}@{}}", r"\toprule",
-            r"\textbf{Id} & \textbf{Statement} & \textbf{Verdict} & \textbf{Reason} \\",
+    body = [r"\begin{longtable}{@{}l p{0.40\linewidth} c c p{0.20\linewidth}@{}}", r"\toprule",
+            r"\textbf{Id} & \textbf{Statement} & \textbf{Source} & \textbf{Verdict} & "
+            r"\textbf{Reason} \\",
             r"\midrule", r"\endhead", r"\bottomrule", r"\endfoot"]
     for record in records:
         _, parse, _ = analyze_tokens_and_parse(record["raw_text"], analyzer)
         verdict = r"\accepted" if parse.accepted else r"\rejected"
         reason = "--" if parse.accepted else str(parse.rejection_reason).replace("_", " ")
+        # A field record without manual attestation does not satisfy the marking scheme.
+        source = str(record["source_kind"])
+        if source == "field" and not record["manual_transcription_attested"]:
+            source += r"\textsuperscript{*}"
         body.append(
             rf"\texttt{{{tex(record['statement_id'])}}} & \small {tex(record['raw_text'])} & "
-            rf"{verdict} & \small {tex(reason)} \\"
+            rf"\small {source} & {verdict} & \small {tex(reason)} \\"
         )
     body.append(r"\end{longtable}")
     write("corpus-results.tex", "\n".join(body))
@@ -291,13 +312,73 @@ def frequencies(analyzer: PreparedAnalyzer, records: list[dict]) -> None:
     write("freq-terminal.tex", block(stats.terminal_frequency, "Terminal", limit=15))
 
 
-def main() -> int:
+def load_database_records(database_url: str) -> list[dict]:
+    """Latest revision of every statement in a live corpus database."""
+    from yaounde_analyzer.api.repository import list_statement_records, topics_from_json
+    from yaounde_analyzer.storage.db import Database
+
+    database = Database.create(database_url)
+    session = database.session_factory()
+    try:
+        records = []
+        for record in list_statement_records(session):
+            latest = record.revisions[-1]
+            records.append(
+                {
+                    "statement_id": record.statement_id,
+                    "revision": latest.revision,
+                    "raw_text": latest.raw_text,
+                    "source_kind": latest.source_kind,
+                    "manual_transcription_attested": latest.manual_transcription_attested,
+                    "collector_id": latest.collector_id,
+                    "topics": topics_from_json(latest.topics_json),
+                    "created_at": latest.created_at.isoformat(),
+                }
+            )
+        return sorted(records, key=lambda r: r["statement_id"])
+    finally:
+        session.close()
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--database",
+        default=os.environ.get("YAOUNDE_DATABASE_URL"),
+        help="SQLAlchemy URL of a live corpus database. Defaults to $YAOUNDE_DATABASE_URL; "
+             "falls back to the packaged demo corpus when neither is set.",
+    )
+    parser.add_argument(
+        "--field-only",
+        action="store_true",
+        help="Keep only manually attested field statements -- use this for the submitted report.",
+    )
+    args = parser.parse_args(argv)
+
     OUT.mkdir(exist_ok=True)
     analyzer = PreparedAnalyzer(load_demo_lexicon(), load_demo_grammar())
     analyzer.check()
-    records = load_demo_corpus_records()
+
+    if args.database:
+        records = load_database_records(args.database)
+        origin = args.database
+    else:
+        records = load_demo_corpus_records()
+        origin = "packaged demo corpus"
+
+    if args.field_only:
+        records = [
+            r for r in records
+            if r["source_kind"] == "field" and r["manual_transcription_attested"]
+        ]
+
+    attested = sum(
+        1 for r in records
+        if r["source_kind"] == "field" and r["manual_transcription_attested"]
+    )
     print(f"Exporting tables for {len(analyzer.lexicon.entries)} lexicon entries, "
-          f"{len(records)} statements")
+          f"{len(records)} statements from {origin}")
+    print(f"  attested field statements: {attested} / {len(records)}")
     facts(analyzer, records)
     regex_table()
     lexicon_summary(analyzer)

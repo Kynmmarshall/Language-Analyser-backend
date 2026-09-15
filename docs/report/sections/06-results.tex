@@ -4,14 +4,15 @@
 
 Every statement in the corpus is run through the full pipeline and the verdict recorded.
 Of \CorpusTotal\ statements, \CorpusAccepted\ are \accepted\ and \CorpusRejected\ are
-\rejected.
+\rejected. A \texttt{field} entry marked \textsuperscript{*} lacks manual-transcription
+attestation and does not count towards the collection requirement.
 
 \input{generated/corpus-results}
 
 \begin{todobox}[These are demo fixtures, not field data]
-As noted in Section~\ref{sec:data}, the statements in the table above are currently
-\texttt{demo} records. Once real collected statements are entered and
-\texttt{tools/export\_tables.py} is re-run, this table repopulates with the field corpus
+Only \CorpusAttested\ of the \CorpusTotal\ statements above are attested field records; the
+rest are \texttt{demo} fixtures, as explained in Section~\ref{sec:data}. Re-exporting
+against the live corpus database once collection is complete repopulates this table
 automatically.
 \end{todobox}
 

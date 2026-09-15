@@ -62,7 +62,16 @@ python tools/render_diagrams.py   # regenerate figures/*.png from diagrams/*.pum
 latexmk -pdf main.tex             # build the report
 \end{lstlisting}
 
-or run \texttt{pwsh ./build.ps1}, which performs all three steps in order.
+or run \texttt{pwsh ./build.ps1}, which performs all three steps in order. Pass
+\texttt{-{}-database <url>} to \texttt{export\_tables.py} to export from a live corpus
+database instead of the packaged fixtures.
+
+The application screenshots in Appendix~\ref{app:screens} are captured separately, from the
+front-end repository:
+
+\begin{lstlisting}[language=bash, numbers=none]
+node scripts/capture-report-screenshots.mjs
+\end{lstlisting}
 
 \subsection{Source layout}
 
