@@ -1,0 +1,72 @@
+\section{Software Architecture}\label{sec:architecture}
+
+\subsection{Overview}
+
+\diagram{architecture.png}{0.95}{System architecture: React front end, FastAPI service,
+compiler core and persistence.}
+
+The system is layered so that the compiler core has no knowledge of the web application
+around it. \texttt{core/} depends on nothing but the standard library and pydantic; it can
+be exercised entirely from the command line. The API layer is a thin translation between
+HTTP and core function calls, and the database stores corpus records only --- never derived
+analysis, which is always recomputed so it cannot go stale relative to the grammar.
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Layer} & \textbf{Module} & \textbf{Responsibility} \\
+\midrule
+Compiler core & \texttt{core/text.py}     & scanning, canonicalisation, folding \\
+              & \texttt{core/lexer.py}    & tokenisation, lexicon resolution \\
+              & \texttt{core/lexicon.py}  & entry storage, lookup indices, homographs \\
+              & \texttt{core/grammar.py}  & grammar model, transformations, ledger \\
+              & \texttt{core/ll1.py}      & FIRST/FOLLOW, table construction \\
+              & \texttt{core/parser.py}   & predictive parser \\
+              & \texttt{core/suggest.py}  & repair suggestions \\
+              & \texttt{core/analysis.py} & snapshots, frequencies, topics \\
+              & \texttt{core/corpus.py}   & validation, revisions, provenance \\
+\midrule
+Service       & \texttt{api/main.py}      & application factory, middleware \\
+              & \texttt{api/routes/}      & analysis, auth, corpus, export, grammar, statistics \\
+\midrule
+Interface     & \texttt{cli.py}           & offline analysis, seeding, export \\
+              & React front end           & analyser, grammar explorer, corpus manager \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Use cases}
+
+\diagram{use-cases.png}{0.88}{Actors and use cases supported by the application.}
+
+\subsection{Front end}
+
+The web client is React with TypeScript and Tailwind. Three views matter for the
+demonstration:
+
+\begin{description}[leftmargin=1.4em, style=nextline]
+  \item[Analyser] Type or paste a statement and see the token stream, the derivation, the
+    verdict, the frequency tables and the detected topics. Individual tokens expand to show
+    the canonical form, terminal class, donor language and gloss, so the lexicon is
+    inspectable without leaving the analysis.
+  \item[Grammar explorer] The original grammar, the transformation ledger, the transformed
+    grammar, FIRST/FOLLOW sets, the LL(1) table and the full lexicon --- with incremental
+    search that filters the lexicon as you type, and an explanation of what each section
+    means and why the transformation was needed.
+  \item[Corpus manager] Add, edit and review statements. Statement identifiers and
+    collector identity are assigned server-side from the signed-in account; edits create
+    revisions rather than overwriting.
+\end{description}
+
+\subsection{Deployment}
+
+The service is containerised and runs behind a reverse proxy on a self-hosted VPS. The
+image ships the built Python wheel together with the Alembic configuration and migration
+scripts; development-only material such as seeding scripts is deliberately excluded, and
+seeding is instead exposed as a CLI subcommand of the installed package so that it works
+identically inside and outside the container.
+
+\begin{limitbox}[Before going live]
+The self-service signup code is still set to a development placeholder. It must be replaced
+with a strong value in the deployment environment before the instance is exposed publicly.
+\end{limitbox}

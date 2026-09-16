@@ -1,0 +1,58 @@
+@startuml
+skinparam dpi 160
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #1F3864
+  LifeLineBorderColor #8FA8CC
+  ParticipantBorderColor #1F3864
+  ParticipantBackgroundColor #EEF2FA
+  ParticipantFontColor #14213D
+  ActorBorderColor #1F3864
+}
+
+actor User
+participant "React\nAnalyzer view" as UI
+participant "FastAPI\n/api/analyze" as API
+participant "lexer.\ntokenize()" as LEX
+participant "parser.\nparse_tokens()" as PAR
+participant "analysis.\nmatch_topics()" as TOP
+participant "suggest.\nsuggest_fixes()" as SUG
+
+User -> UI : type statement, submit
+activate UI
+UI -> API : POST /api/analyze {text}
+activate API
+
+API -> LEX : tokenize(text, lexicon)
+activate LEX
+LEX --> API : Token[]
+deactivate LEX
+
+API -> PAR : parse_tokens(tokens, grammar, table)
+activate PAR
+PAR --> API : ParseResult\n(accepted / rejected + trace)
+deactivate PAR
+
+API -> TOP : match_topics(tokens)
+activate TOP
+TOP --> API : TopicMatch[]
+deactivate TOP
+
+API -> SUG : suggest_fixes(tokens, parse, lexicon)
+activate SUG
+SUG --> API : Suggestion[]
+deactivate SUG
+
+API --> UI : 200 AnalyzeResponse JSON
+deactivate API
+UI --> User : tokens, verdict, topics, hints
+deactivate UI
+
+note over LEX, SUG
+  The lexicon, grammar and LL(1) table come from the single
+  PreparedAnalyzer built once at start-up, never per request.
+end note
+
+@enduml

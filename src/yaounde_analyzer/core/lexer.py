@@ -10,9 +10,21 @@ from __future__ import annotations
 
 from yaounde_analyzer.core.lexicon import LexicalEntry, LexiconSpec
 from yaounde_analyzer.core.models import SourceSpan, Token
-from yaounde_analyzer.core.text import RawSpan, SpanKind, canonicalize_word, scan_spans
+from yaounde_analyzer.core.text import (
+    RawSpan,
+    SpanKind,
+    canonicalize_word,
+    fold_word,
+    scan_spans,
+)
 
 UNKNOWN_TERMINAL = "UNKNOWN"
+SEP_TERMINAL = "SEP"
+
+# Commas, semicolons and colons separate clauses in transcribed speech, so they are real
+# syntax and become tokens. Sentence-final marks and quotes carry no clause structure and
+# stay trivia.
+_SEPARATOR_CHARS = frozenset(",;:")
 NUMBER_TERMINAL = "NUMBER"
 _TRIVIA_KINDS = frozenset({SpanKind.SPACE, SpanKind.NEWLINE, SpanKind.PUNCTUATION})
 
@@ -33,7 +45,8 @@ def _match_multiword(
     for position, expected in enumerate(words):
         if index >= len(spans) or spans[index].kind != SpanKind.WORD:
             return None
-        if canonicalize_word(spans[index].raw) != expected:
+        actual = spans[index].raw
+        if canonicalize_word(actual) != expected and fold_word(actual) != fold_word(expected):
             return None
         end_offset = spans[index].end
         index += 1
@@ -63,6 +76,7 @@ def _entry_token(text: str, entry: LexicalEntry, spans: tuple[RawSpan, ...]) -> 
         is_multiword=is_multiword,
         component_spans=component_spans,
         rule_id=entry.rule_id,
+        description=entry.description,
         span=SourceSpan(start=start, end=end),
     )
 
@@ -74,6 +88,17 @@ def _unknown_token(text: str, span: RawSpan) -> Token:
         terminal=UNKNOWN_TERMINAL,
         part_of_speech=UNKNOWN_TERMINAL,
         rule_id="lexer.unknown",
+        span=SourceSpan(start=span.start, end=span.end),
+    )
+
+
+def _separator_token(text: str, span: RawSpan) -> Token:
+    return Token(
+        raw=text[span.start : span.end],
+        canonical=span.raw,
+        terminal=SEP_TERMINAL,
+        part_of_speech="clause_separator",
+        rule_id="lexer.separator",
         span=SourceSpan(start=span.start, end=span.end),
     )
 
@@ -100,13 +125,17 @@ def tokenize(text: str, lexicon: LexiconSpec) -> tuple[Token, ...]:
     """
     spans = scan_spans(text)
     single_word_lookup = lexicon.single_word_lookup()
+    folded_single_word_lookup = lexicon.folded_single_word_lookup()
     multiword_by_first_word = lexicon.multiword_entries_by_first_word()
+    multiword_by_folded_first_word = lexicon.multiword_entries_by_folded_first_word()
 
     tokens: list[Token] = []
     index = 0
     while index < len(spans):
         span = spans[index]
         if span.kind in _TRIVIA_KINDS:
+            if span.kind == SpanKind.PUNCTUATION and set(span.raw) <= _SEPARATOR_CHARS:
+                tokens.append(_separator_token(text, span))
             index += 1
             continue
         if span.kind == SpanKind.NUMBER:
@@ -120,8 +149,16 @@ def tokenize(text: str, lexicon: LexiconSpec) -> tuple[Token, ...]:
             continue
 
         canonical = canonicalize_word(span.raw)
+        folded = fold_word(span.raw)
+        # Exact candidates are tried before folded ones so correctly accented input keeps
+        # its own entry; folding is only a safety net for unaccented spellings.
+        candidates = multiword_by_first_word.get(canonical, ()) + tuple(
+            entry
+            for entry in multiword_by_folded_first_word.get(folded, ())
+            if entry not in multiword_by_first_word.get(canonical, ())
+        )
         matched = False
-        for candidate in multiword_by_first_word.get(canonical, ()):
+        for candidate in candidates:
             match = _match_multiword(spans, index, candidate)
             if match is not None:
                 end_index, _ = match
@@ -135,7 +172,7 @@ def tokenize(text: str, lexicon: LexiconSpec) -> tuple[Token, ...]:
         if matched:
             continue
 
-        single_entry = single_word_lookup.get(canonical)
+        single_entry = single_word_lookup.get(canonical) or folded_single_word_lookup.get(folded)
         if single_entry is not None:
             tokens.append(_entry_token(text, single_entry, (span,)))
         else:

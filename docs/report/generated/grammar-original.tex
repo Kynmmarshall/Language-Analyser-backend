@@ -1,0 +1,59 @@
+\begin{longtable}{@{}l l l@{}}
+\toprule
+\textbf{Nonterminal} & \textbf{Production} & \textbf{Rule id} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{S} & $\rightarrow$ \texttt{Seq} & \scriptsize\texttt{demo.gram.s1} \\
+\addlinespace
+\texttt{Seq} & $\rightarrow$ \texttt{Seq CONJ Unit} & \scriptsize\texttt{demo.gram.seq1} \\
+\texttt{} & $\mid$ \texttt{Seq SEP Unit} & \scriptsize\texttt{demo.gram.seq2} \\
+\texttt{} & $\mid$ \texttt{Seq SEP CONJ Unit} & \scriptsize\texttt{demo.gram.seq3} \\
+\texttt{} & $\mid$ \texttt{Unit} & \scriptsize\texttt{demo.gram.seq4} \\
+\addlinespace
+\texttt{Unit} & $\rightarrow$ \texttt{INTJ Clause} & \scriptsize\texttt{demo.gram.unit1} \\
+\texttt{} & $\mid$ \texttt{INTJ} & \scriptsize\texttt{demo.gram.unit2} \\
+\texttt{} & $\mid$ \texttt{FORMULA} & \scriptsize\texttt{demo.gram.unit3} \\
+\texttt{} & $\mid$ \texttt{Clause} & \scriptsize\texttt{demo.gram.unit4} \\
+\addlinespace
+\texttt{Clause} & $\rightarrow$ \texttt{PP ClauseOpt} & \scriptsize\texttt{demo.gram.clause1} \\
+\texttt{} & $\mid$ \texttt{NP ClauseTail} & \scriptsize\texttt{demo.gram.clause2} \\
+\texttt{} & $\mid$ \texttt{Predicate} & \scriptsize\texttt{demo.gram.clause3} \\
+\addlinespace
+\texttt{ClauseOpt} & $\rightarrow$ \texttt{Clause} & \scriptsize\texttt{demo.gram.copt1} \\
+\texttt{} & $\mid$ $\varepsilon$ & \scriptsize\texttt{demo.gram.copt2} \\
+\addlinespace
+\texttt{ClauseTail} & $\rightarrow$ \texttt{Predicate} & \scriptsize\texttt{demo.gram.ctail1} \\
+\texttt{} & $\mid$ \texttt{NP Predicate} & \scriptsize\texttt{demo.gram.ctail2} \\
+\texttt{} & $\mid$ $\varepsilon$ & \scriptsize\texttt{demo.gram.ctail3} \\
+\addlinespace
+\texttt{Predicate} & $\rightarrow$ \texttt{ADV Predicate} & \scriptsize\texttt{demo.gram.pred1} \\
+\texttt{} & $\mid$ \texttt{NegOpt VerbGroup Comps} & \scriptsize\texttt{demo.gram.pred2} \\
+\addlinespace
+\texttt{NegOpt} & $\rightarrow$ \texttt{NEG} & \scriptsize\texttt{demo.gram.neg1} \\
+\texttt{} & $\mid$ $\varepsilon$ & \scriptsize\texttt{demo.gram.neg2} \\
+\addlinespace
+\texttt{VerbGroup} & $\rightarrow$ \texttt{VERB VerbTail} & \scriptsize\texttt{demo.gram.vg1} \\
+\addlinespace
+\texttt{VerbTail} & $\rightarrow$ \texttt{VERB VerbTail} & \scriptsize\texttt{demo.gram.vt1} \\
+\texttt{} & $\mid$ \texttt{ADV VerbTail} & \scriptsize\texttt{demo.gram.vt2} \\
+\texttt{} & $\mid$ \texttt{NEG VerbTail} & \scriptsize\texttt{demo.gram.vt3} \\
+\texttt{} & $\mid$ $\varepsilon$ & \scriptsize\texttt{demo.gram.vt4} \\
+\addlinespace
+\texttt{Comps} & $\rightarrow$ \texttt{NP Comps} & \scriptsize\texttt{demo.gram.comps1} \\
+\texttt{} & $\mid$ \texttt{PREP CompObj Comps} & \scriptsize\texttt{demo.gram.comps2} \\
+\texttt{} & $\mid$ \texttt{ADJ Comps} & \scriptsize\texttt{demo.gram.comps3} \\
+\texttt{} & $\mid$ $\varepsilon$ & \scriptsize\texttt{demo.gram.comps4} \\
+\addlinespace
+\texttt{CompObj} & $\rightarrow$ \texttt{NP} & \scriptsize\texttt{demo.gram.cobj1} \\
+\texttt{} & $\mid$ \texttt{VerbGroup} & \scriptsize\texttt{demo.gram.cobj2} \\
+\addlinespace
+\texttt{NP} & $\rightarrow$ \texttt{DET NOUN} & \scriptsize\texttt{demo.gram.np1} \\
+\texttt{} & $\mid$ \texttt{DET ADJ NOUN} & \scriptsize\texttt{demo.gram.np2} \\
+\texttt{} & $\mid$ \texttt{PRON} & \scriptsize\texttt{demo.gram.np3} \\
+\texttt{} & $\mid$ \texttt{NOUN} & \scriptsize\texttt{demo.gram.np4} \\
+\addlinespace
+\texttt{PP} & $\rightarrow$ \texttt{PREP NP} & \scriptsize\texttt{demo.gram.pp1} \\
+\addlinespace
+\end{longtable}

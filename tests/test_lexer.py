@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import unicodedata
-from pathlib import Path
 
-from yaounde_analyzer.core.lexer import UNKNOWN_TERMINAL, tokenize
-from yaounde_analyzer.core.specs import load_demo_lexicon
+import pytest
+from pydantic import ValidationError
 
-DEMO_CORPUS_PATH = Path(__file__).resolve().parent.parent / "data" / "demo.json"
+from yaounde_analyzer.core.lexer import SEP_TERMINAL, UNKNOWN_TERMINAL, tokenize
+from yaounde_analyzer.core.lexicon import EntrySource, LexicalEntry, LexiconSpec
+from yaounde_analyzer.core.specs import load_demo_corpus_records, load_demo_lexicon
+
 LEXICON = load_demo_lexicon()
 
 
@@ -50,8 +51,22 @@ def test_three_word_multiword_entry_and_standalone_first_word() -> None:
 def test_multiword_match_is_blocked_across_punctuation() -> None:
     # "au, lieu de" has a comma between "au" and "lieu": the phrase must not match.
     tokens = tokenize("au, lieu de", LEXICON)
-    assert [t.terminal for t in tokens] == ["PREP", UNKNOWN_TERMINAL, "PREP"]
-    assert tokens[1].raw == "lieu"
+    assert [t.terminal for t in tokens] == ["PREP", SEP_TERMINAL, UNKNOWN_TERMINAL, "PREP"]
+    assert tokens[2].raw == "lieu"
+
+
+def test_unaccented_spelling_resolves_to_the_accented_entry() -> None:
+    tokens = tokenize("Le reseau coute trop cher deja", LEXICON)
+    assert [t.canonical for t in tokens] == ["le", "réseau", "coûte", "trop", "cher", "déjà"]
+    # The writer's own spelling is still preserved verbatim.
+    assert [t.raw for t in tokens][1] == "reseau"
+
+
+def test_accent_folding_never_merges_a_real_minimal_pair() -> None:
+    # 'a'/'à' and 'mais'/'maïs' fold together, so each must keep its own exact match
+    # rather than being resolved to whichever entry folding happened to reach first.
+    assert [t.terminal for t in tokenize("il a mais", LEXICON)] == ["PRON", "VERB", "CONJ"]
+    assert [t.terminal for t in tokenize("à maïs", LEXICON)] == ["PREP", "NOUN"]
 
 
 def test_unknown_word_is_preserved_not_dropped() -> None:
@@ -62,9 +77,18 @@ def test_unknown_word_is_preserved_not_dropped() -> None:
     assert unknown[0].span.start == "On go au ".__len__()
 
 
-def test_whitespace_and_punctuation_are_trivia() -> None:
-    tokens = tokenize("On   go,  au   kwatt!!!", LEXICON)
+def test_whitespace_and_sentence_punctuation_are_trivia() -> None:
+    tokens = tokenize("On   go   au   kwatt!!!", LEXICON)
     assert [t.canonical for t in tokens] == ["on", "go", "au", "kwatt"]
+
+
+def test_clause_punctuation_becomes_a_separator_token() -> None:
+    # Commas carry clause structure, so unlike '!' they reach the parser.
+    tokens = tokenize("On go, au kwatt!", LEXICON)
+    assert [t.terminal for t in tokens] == ["PRON", "VERB", SEP_TERMINAL, "PREP", "NOUN"]
+    separator = tokens[2]
+    assert separator.raw == ","
+    assert "On go, au kwatt!"[separator.span.start : separator.span.end] == ","
 
 
 def test_offsets_use_code_points_not_utf16_units() -> None:
@@ -88,11 +112,56 @@ def test_decomposed_unicode_input_resolves_to_the_same_lexicon_entry() -> None:
 
 
 def test_full_demo_corpus_tokenizes_with_no_unknown_words() -> None:
-    records = json.loads(DEMO_CORPUS_PATH.read_text(encoding="utf-8"))
-    for record in records:
+    for record in load_demo_corpus_records():
         tokens = tokenize(record["raw_text"], LEXICON)
         unknown = [t.raw for t in tokens if t.terminal == UNKNOWN_TERMINAL]
         assert unknown == [], f"{record['statement_id']} has unrecognized words: {unknown}"
+
+
+def test_interjection_and_formula_entries_tokenize_as_single_units() -> None:
+    assert [(t.canonical, t.terminal) for t in tokenize("Ashia !", LEXICON)] == [
+        ("ashia", "INTJ")
+    ]
+    # The formula wins over the separate 'on' and 'dit' entries that also exist.
+    assert [(t.canonical, t.terminal) for t in tokenize("On dit quoi ?", LEXICON)] == [
+        ("on dit quoi", "FORMULA")
+    ]
+
+
+def test_words_outside_a_formula_still_resolve_on_their_own() -> None:
+    # Adding 'on dit quoi' must not swallow 'on' or 'dit' in unrelated positions.
+    assert [t.canonical for t in tokenize("il dit que on go", LEXICON)] == [
+        "il", "dit", "que", "on", "go",
+    ]
+
+
+def test_corpus_sourced_entries_must_cite_evidence() -> None:
+    corpus_entries = [e for e in LEXICON.entries if e.source is EntrySource.CORPUS]
+    assert corpus_entries, "expected the lexicon to retain corpus-attested entries"
+    for entry in corpus_entries:
+        assert entry.evidence_statement_ids, entry.rule_id
+
+
+def test_dictionary_sourced_entries_are_marked_and_uncited() -> None:
+    dictionary_entries = [e for e in LEXICON.entries if e.source is EntrySource.DICTIONARY]
+    assert dictionary_entries, "expected dictionary-derived entries to be present"
+    for entry in dictionary_entries:
+        assert entry.evidence_statement_ids == (), entry.rule_id
+
+
+def test_a_corpus_entry_without_evidence_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="cites no statement"):
+        LexiconSpec(
+            version="test",
+            entries=(
+                LexicalEntry(
+                    canonical="combi",
+                    terminal="NOUN",
+                    part_of_speech="noun",
+                    rule_id="test.lex.combi",
+                ),
+            ),
+        )
 
 
 def test_tokenizer_always_advances_on_pathological_input() -> None:

@@ -1,0 +1,62 @@
+\section{Introduction}
+
+\subsection{The assignment}
+
+The CS4110 final examination asks each group of three to build a mini-language analyzer
+over real, manually transcribed speech collected in Yaound\'e, a city where everyday
+conversation mixes French, English, Pidgin, Fulfulde and Ewondo with locally invented
+slang. The graded work has five components: a corpus of 10--15 authentic statements; a
+lexical specification with regular-expression token types and a custom lexical analyzer;
+a context-free grammar reduced to LL(1) form with left-recursion removal, left factoring,
+FIRST/FOLLOW sets and a parsing table; a working parser that accepts or rejects the
+collected sentences; and this report together with a live demonstration.
+
+\subsection{What we built}
+
+Rather than a single script, we built \textbf{Francanglais Studio}: a complete compiler
+front end -- scanner, lexer, grammar preparation, LL(1) table construction and a
+table-driven parser -- wrapped in a web application so that every compiler artefact the
+rubric asks to see is directly inspectable rather than buried in console output.
+
+\begin{keypoint}[Design principle]
+The analyzer recognises a \emph{documented subset} of collected speech. It never pretends
+to understand every sentence, never silently drops an unknown word, and never silently
+resolves a grammar ambiguity. Unknown vocabulary and parsing conflicts are both reported
+explicitly, because those reports are the evidence this report is built on.
+\end{keypoint}
+
+\subsection{Scale of the artefact}
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Artefact} & \textbf{Size} \\
+\midrule
+Statements collected in the field & \CorpusTotal \\
+\quad accepted by the grammar & \CorpusAccepted \\
+Lexicon entries & \LexiconTotal \\
+\quad corpus-attested & \LexiconCorpus \\
+\quad dictionary-derived & \LexiconDictionary \\
+\quad multiword entries & \LexiconMultiword \\
+Grammar terminals & \TerminalCount \\
+Grammar nonterminals (as authored) & \NonterminalCount \\
+Productions (authored / executable) & \ProductionCount\ / \ExecProductionCount \\
+Transformation steps recorded & \LedgerSteps \\
+Donor languages modelled & \OriginCount \\
+Topic rules & \TopicCount \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every number above, and every table in this report, is exported directly from the running
+analyzer by \texttt{tools/export\_tables.py}. Nothing is transcribed by hand, so the report
+cannot drift from the code it documents.
+
+\subsection{How to read this report}
+
+Sections~\ref{sec:data}--\ref{sec:results} follow the marking scheme in order: data
+collection, lexical analysis, syntactic analysis, implementation, and the accept/reject
+results. Section~\ref{sec:complexity} answers the required discussion question on why
+Yaound\'e communication is linguistically complex. Section~\ref{sec:architecture} documents
+the surrounding software architecture. Appendices hold the full grammar listings, the
+corpus-attested lexicon and screenshots of the working analyzer.

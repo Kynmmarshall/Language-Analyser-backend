@@ -1,0 +1,57 @@
+\section{Conclusion}
+
+\subsection{What was achieved}
+
+The project delivers a complete, working compiler front end for a language that has no
+standard written form. Concretely:
+
+\begin{itemize}[leftmargin=1.4em, itemsep=0.2em]
+  \item A corpus of \CorpusTotal\ statements heard in Yaound\'e, transcribed by hand,
+        cross-checked, and attributed across all three team members, with the attestation
+        enforced in software rather than asserted in prose.
+  \item A hand-written scanner and lexer built on five documented regular expressions,
+        resolving \LexiconTotal\ lexicon entries across \OriginCount\ donor languages into
+        \TerminalCount\ terminal classes, with multiword recognition, accent folding and
+        homograph protection.
+  \item A context-free grammar of \ProductionCount\ productions authored in natural
+        left-recursive form, mechanically transformed in \LedgerSteps\ recorded steps into
+        an \ExecProductionCount-production LL(1) grammar.
+  \item FIRST and FOLLOW sets and a parsing table that is verified conflict-free by an
+        automated test.
+  \item A table-driven predictive parser that returns an explicit derivation on acceptance
+        and an expected-terminal set plus concrete repair suggestions on rejection,
+        accepting \CorpusAccepted\ of \CorpusTotal\ collected statements.
+  \item A web application that exposes every one of those artefacts for inspection, so the
+        compiler is demonstrable rather than merely described.
+\end{itemize}
+
+\subsection{What we learned}
+
+The most useful lesson was that the transformations taught in the course are not
+bookkeeping. Eliminating left recursion on \nonterm{Seq} \emph{created} a new common prefix
+on \term{SEP} that had to be factored out afterwards --- the two techniques interact, and the
+order they are applied in decides whether the result is LL(1). Seeing that happen on our own
+grammar, in the ledger the tool recorded, taught more than the worked examples did.
+
+The second lesson concerns honesty in tooling. It was tempting, each time a statement was
+rejected, to add a production until it passed. We resisted this, and the two remaining
+rejections in Section~\ref{sec:results} are documented with the specific LL(1) conflict that
+prevents a fix. A grammar that accepts everything distinguishes nothing.
+
+\subsection{Remaining work}
+
+\begin{todobox}[Outstanding before submission]
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.2em]
+  \item \textbf{Presentation.} Prepare the ten-minute slide deck and live demonstration.
+  \item \textbf{Deployment hardening.} Replace the placeholder signup code before the
+        public instance is exposed.
+\end{enumerate}
+\end{todobox}
+
+\subsection{Future extensions}
+
+Splitting \term{PRON} into full pronouns and clitics would remove both documented
+rejections at the cost of re-annotating the pronoun entries. Beyond that, the natural next
+step is a semantic layer: the lexicon already carries glosses and donor languages, so a
+gloss-composition pass over the parse tree would turn the analyzer from a recogniser into a
+translator --- which is what would make it useful outside a coursework setting.

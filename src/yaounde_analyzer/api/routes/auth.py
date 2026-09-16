@@ -18,9 +18,12 @@ from yaounde_analyzer.api.deps import (
 from yaounde_analyzer.api.repository import (
     authenticate_user,
     create_auth_session,
+    create_user,
+    get_user_by_username,
     revoke_auth_session,
 )
-from yaounde_analyzer.api.schemas import LoginRequest, UserPublic
+from yaounde_analyzer.api.schemas import LoginRequest, SignupRequest, SignupStatus, UserPublic
+from yaounde_analyzer.api.security import constant_time_equals
 from yaounde_analyzer.api.settings import Settings
 from yaounde_analyzer.storage.models import User
 
@@ -51,6 +54,43 @@ def login(
     user = authenticate_user(session, payload.username, payload.password)
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
+    _, raw_token, csrf_token = create_auth_session(session, user, settings.session_lifetime_seconds)
+    _set_session_cookies(response, settings, raw_token, csrf_token)
+    return UserPublic(username=user.username)
+
+
+@router.get("/signup", response_model=SignupStatus)
+def signup_status(settings: Settings = Depends(get_settings)) -> SignupStatus:
+    return SignupStatus(enabled=settings.signup_enabled)
+
+
+@router.post(
+    "/signup",
+    response_model=UserPublic,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_same_origin)],
+)
+def signup(
+    payload: SignupRequest,
+    response: Response,
+    session: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> UserPublic:
+    """Self-service registration, gated by a shared code.
+
+    The corpus holds field data and collector identities, so this stays disabled unless
+    YAOUNDE_SIGNUP_CODE is configured. The code is compared in constant time, and a wrong
+    code is reported identically whether or not the username is already taken, so the
+    endpoint cannot be used to enumerate accounts.
+    """
+    if not settings.signup_enabled or settings.signup_code is None:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Registration is disabled")
+    if not constant_time_equals(payload.signup_code, settings.signup_code):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Invalid registration code")
+    if get_user_by_username(session, payload.username) is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="That username is already taken")
+
+    user = create_user(session, payload.username, payload.password)
     _, raw_token, csrf_token = create_auth_session(session, user, settings.session_lifetime_seconds)
     _set_session_cookies(response, settings, raw_token, csrf_token)
     return UserPublic(username=user.username)

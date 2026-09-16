@@ -1,0 +1,99 @@
+@startuml
+skinparam dpi 160
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam class {
+  BorderColor #1F3864
+  BackgroundColor #EEF2FA
+  FontColor #14213D
+  AttributeFontColor #14213D
+}
+
+class LexiconSpec {
+  +version: str
+  +entries: LexicalEntry[]
+  +single_word_lookup()
+  +folded_single_word_lookup()
+  +homographs()
+  -_check_entries_are_well_formed()
+}
+
+class LexicalEntry {
+  +canonical: str
+  +terminal: str
+  +part_of_speech: str
+  +is_slang: bool
+  +language_candidates: LanguageLabel[]
+  +evidence_statement_ids: str[]
+  +source: EntrySource
+  -_check_canonical_is_normalized()
+}
+
+class GrammarSpec {
+  +start_symbol: str
+  +terminals: str[]
+  +nonterminals: str[]
+  +productions: Production[]
+  -_check_symbols()
+}
+
+class Production {
+  +id: str
+  +lhs: str
+  +rhs: str[]
+  +evidence_statement_ids: str[]
+}
+
+class TransformationStep {
+  +kind: TransformationKind
+  +description: str
+  +source_production_ids: str[]
+  +result_production_ids: str[]
+}
+
+class PreparedAnalyzer {
+  +lexicon: LexiconSpec
+  +descriptive_grammar: GrammarSpec
+  +grammar: GrammarSpec
+  +transformation_steps: TransformationStep[]
+  +first / follow / table
+  +check()
+}
+
+class Token {
+  +raw: str
+  +canonical: str
+  +terminal: str
+  +part_of_speech: str
+  +is_slang: bool
+  +description: str
+  +span: SourceSpan
+}
+
+class ParseResult {
+  +accepted: bool
+  +rejection_reason: RejectionReason
+  +matched_token_count: int
+  +expected_terminals: str[]
+  +trace: TraceStep[]
+  +tree: ParseTreeNode
+}
+
+class Suggestion {
+  +kind: str
+  +message: str
+  +span: SourceSpan
+  +replacements: str[]
+}
+
+LexiconSpec *-- "0..*" LexicalEntry
+GrammarSpec *-- "0..*" Production
+PreparedAnalyzer o-- LexiconSpec
+PreparedAnalyzer o-- GrammarSpec
+PreparedAnalyzer o-- "0..*" TransformationStep
+PreparedAnalyzer ..> Token : produces
+PreparedAnalyzer ..> ParseResult : produces
+ParseResult ..> Suggestion : explained by
+
+@enduml

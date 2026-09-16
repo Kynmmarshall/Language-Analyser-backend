@@ -1,0 +1,142 @@
+\section{Syntactic Analysis}\label{sec:syntax}
+
+\subsection{What the grammar has to describe}
+
+Real Yaound\'e speech does not arrive as tidy subject--verb--object sentences. The grammar
+has to admit at least the following, all of which occur in the data:
+
+\begin{itemize}[leftmargin=1.4em, itemsep=0.2em]
+  \item clauses juxtaposed without any conjunction, separated only by a comma or by
+        nothing at all (\fw{on est l\`a, \c ca va});
+  \item a fronted prepositional phrase before the subject (\fw{dans le taxi, ...});
+  \item bare interjections and frozen formulas standing alone as complete utterances;
+  \item serial verbs -- two or more verbs in sequence with no linking word;
+  \item pre-verbal negation and adverbs interleaved inside the verb group;
+  \item subject dropping entirely, leaving a bare predicate.
+\end{itemize}
+
+\subsection{Original context-free grammar}
+
+The grammar is authored in its natural, human-readable form -- including left recursion --
+and the transformations are applied by the tool. Authoring it pre-factored would have hidden
+exactly the work this component is graded on.
+
+\ProductionCount\ productions over \TerminalCount\ terminals and \NonterminalCount\
+nonterminals:
+
+\input{generated/grammar-original}
+
+The design decisions worth naming:
+
+\begin{description}[leftmargin=1.4em, style=nextline]
+  \item[\nonterm{Seq} is left recursive] \nonterm{Seq} $\rightarrow$ \nonterm{Seq}
+    \term{CONJ} \nonterm{Unit} is the natural way to say ``a statement is a list of units
+    joined by conjunctions or separators''. Three of its four alternatives recurse on the
+    left, which is what the elimination step below removes.
+  \item[\nonterm{Clause} has three entries] one for a fronted \nonterm{PP}, one starting
+    from an \nonterm{NP}, and one for a bare \nonterm{Predicate} with no subject at all.
+  \item[\nonterm{ClauseTail} allows two noun phrases] \nonterm{NP} \nonterm{Predicate}
+    covers left-dislocated topics -- \fw{le taximan, lui il sait} -- which are extremely
+    common and would otherwise be rejected.
+  \item[\nonterm{Predicate} is recursive through \nonterm{ADV}] so adverbs stack freely
+    before the verb group, which is where they actually occur.
+  \item[\nonterm{VerbTail} is the serial-verb device] it lets verbs, adverbs and negations
+    chain after the head verb without bounding the number of them.
+\end{description}
+
+\subsection{Transformation ledger}
+
+The analyzer records every transformation it performs, with the identifiers of the rules
+produced. \LedgerSteps\ steps were required: one left-recursion elimination and three left
+factorings.
+
+\input{generated/ledger}
+
+\subsubsection*{Step 1 --- left-recursion elimination on \nonterm{Seq}}
+
+Applying the standard construction, the immediately left-recursive
+\nonterm{Seq} $\rightarrow$ \nonterm{Seq}$\,\alpha_i \mid \beta$ becomes:
+
+\begin{center}
+\begin{tabular}{@{}l@{\quad}l@{}}
+\nonterm{Seq}  & $\rightarrow$ \nonterm{Unit} \nonterm{Seq$'$} \\
+\nonterm{Seq$'$} & $\rightarrow$ \term{CONJ} \nonterm{Unit} \nonterm{Seq$'$} \\
+               & $\mid$ \term{SEP} \nonterm{Unit} \nonterm{Seq$'$} \\
+               & $\mid$ \term{SEP} \term{CONJ} \nonterm{Unit} \nonterm{Seq$'$} \\
+               & $\mid$ $\varepsilon$ \\
+\end{tabular}
+\end{center}
+
+\subsubsection*{Steps 2--4 --- left factoring}
+
+Elimination immediately \emph{creates} a new conflict: two \nonterm{Seq$'$} alternatives now
+begin with \term{SEP}, so a predictive parser cannot choose between them on one token of
+lookahead. That is factored into \nonterm{Seq$''$}. Two pre-existing conflicts are factored
+the same way:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Nonterminal} & \textbf{Common prefix} & \textbf{Fresh nonterminal} \\
+\midrule
+\nonterm{Seq$'$} & \term{SEP} & \nonterm{Seq$''$} \\
+\nonterm{Unit}   & \term{INTJ} & \nonterm{Unit$'$} \\
+\nonterm{NP}     & \term{DET}  & \nonterm{NP$'$} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\nonterm{NP} is the clearest illustration: \nonterm{NP} $\rightarrow$ \term{DET} \term{NOUN}
+and \nonterm{NP} $\rightarrow$ \term{DET} \term{ADJ} \term{NOUN} share \term{DET}, so the
+parser must delay the decision until after the determiner is consumed:
+
+\begin{center}
+\begin{tabular}{@{}l@{\quad}l@{}}
+\nonterm{NP}   & $\rightarrow$ \term{DET} \nonterm{NP$'$} $\mid$ \term{PRON} $\mid$ \term{NOUN} \\
+\nonterm{NP$'$} & $\rightarrow$ \term{NOUN} $\mid$ \term{ADJ} \term{NOUN} \\
+\end{tabular}
+\end{center}
+
+\begin{keypoint}[Order matters]
+Left factoring is applied \emph{after} left-recursion elimination, and repeatedly until no
+common prefixes remain. Running them in the other order would leave the \term{SEP} conflict
+that elimination introduces, and the grammar would not be LL(1).
+\end{keypoint}
+
+\subsection{Transformed grammar}
+
+The executable grammar, \ExecProductionCount\ productions after transformation:
+
+\input{generated/grammar-transformed}
+
+\subsection{FIRST and FOLLOW sets}
+
+FIRST and FOLLOW are computed by fixed-point iteration in
+\texttt{core/ll1.py}: repeatedly apply the standard closure rules until no set changes.
+Nullable nonterminals are those whose FIRST set derivation reaches $\varepsilon$; in this
+grammar they are \nonterm{ClauseOpt}, \nonterm{ClauseTail}, \nonterm{Comps},
+\nonterm{NegOpt}, \nonterm{Seq$'$}, \nonterm{Unit$'$} and \nonterm{VerbTail}.
+
+\input{generated/first-follow}
+
+\subsection{LL(1) parsing table}
+
+The table is built by the standard rule: for each production
+$A \rightarrow \alpha$, add it at $[A, t]$ for every $t \in \mathrm{FIRST}(\alpha)$; and if
+$\alpha$ is nullable, also for every $t \in \mathrm{FOLLOW}(A)$. A second production landing
+in an occupied cell is a conflict.
+
+\begin{keypoint}[Result: conflict-free]
+The constructed table contains \textbf{no duplicated cells}. The grammar is LL(1) and the
+parser needs exactly one token of lookahead, with no backtracking and no ambiguity
+resolution heuristics. \texttt{tests/test\_ll1.py} asserts this property, so a future
+grammar edit that introduces a conflict fails the test suite rather than degrading
+silently.
+\end{keypoint}
+
+The full table is on the next page; rows are nonterminals, columns are terminals plus the
+end marker \term{\$}, and cells hold the production identifier to apply.
+
+\begin{landscape}
+\input{generated/ll1-table}
+\end{landscape}

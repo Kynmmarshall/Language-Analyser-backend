@@ -21,12 +21,27 @@ from yaounde_analyzer.core.models import (
     TopicMatch,
     TransformationStep,
 )
+from yaounde_analyzer.core.suggest import Suggestion
 
 
 class LoginRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=256)
+
+
+class SignupRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    username: str = Field(min_length=3, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
+    password: str = Field(min_length=8, max_length=256)
+    signup_code: str = Field(min_length=1, max_length=256)
+
+
+class SignupStatus(BaseModel):
+    """Lets the UI hide the signup route entirely when the server has it disabled."""
+
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool
 
 
 class UserPublic(BaseModel):
@@ -39,16 +54,20 @@ class AnalyzeResponse(BaseModel):
     tokens: tuple[Token, ...]
     parse: ParseResult
     topics: tuple[TopicMatch, ...]
+    suggestions: tuple[Suggestion, ...] = ()
 
 
 class StatementCreateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    statement_id: str = Field(min_length=1, max_length=64)
     source_kind: str = Field(pattern="^(demo|field)$")
     raw_text: str = Field(min_length=1, max_length=2000)
     manual_transcription_attested: bool
-    collector_id: str = Field(min_length=1, max_length=64)
     topics: tuple[str, ...] = ()
+    # Both are assigned by the server when omitted: the id sequentially, the collector
+    # from the authenticated session. Supplying a collector_id cannot impersonate anyone,
+    # because the route ignores it unless it matches the caller.
+    statement_id: str | None = Field(default=None, min_length=1, max_length=64)
+    collector_id: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class StatementUpdateRequest(BaseModel):
@@ -57,8 +76,10 @@ class StatementUpdateRequest(BaseModel):
     raw_text: str = Field(min_length=1, max_length=2000)
     source_kind: str = Field(pattern="^(demo|field)$")
     manual_transcription_attested: bool
-    collector_id: str = Field(min_length=1, max_length=64)
     topics: tuple[str, ...] = ()
+    # Defaults to the previous revision's collector so an editor never silently
+    # reassigns who collected the statement in the field.
+    collector_id: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class PublishRequest(BaseModel):

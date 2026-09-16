@@ -1,0 +1,96 @@
+\section{Data Collection}\label{sec:data}
+
+\subsection{Method}
+
+Collection was shared across the three team members. The procedure recorded in
+\texttt{data/\allowbreak COLLECTION\_\allowbreak TEMPLATE.md} and followed for every
+statement was:
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.2em]
+  \item Listen in an ordinary setting -- taxis, chop houses, roadside stalls, bendskin
+        ranks, the neighbourhood, the university.
+  \item Write down \emph{the exact words spoken}, preserving slang, code-mixing, accents,
+        incomplete sentences and mistakes. No cleaning up, no translation.
+  \item Have a second Francanglais-familiar member check the transcription against what
+        was heard, and record any disagreement rather than resolving it silently.
+  \item Explain the coursework and obtain permission before retaining identifiable
+        conversation; use anonymous identifiers and avoid unsafe collection settings.
+\end{enumerate}
+
+The statements were gathered over six days across a range of everyday situations rather
+than in one sitting, so the corpus is not dominated by a single speaker, setting or topic.
+
+\subsection{Coverage and attribution}
+
+\CorpusTotal\ statements were collected and retained, above the 10--15 the assignment asks
+for. Every one is attributed to the member who heard and transcribed it:
+
+\begin{center}
+\input{generated/collectors}
+\end{center}
+
+\subsection{Provenance enforced in software}
+
+Authenticity is not left to good intentions -- it is a validated invariant. Every record
+carries a \texttt{source\_kind} of either \texttt{field} or \texttt{demo}, and
+\texttt{validate\_import} in \texttt{core/corpus.py} \emph{rejects} any \texttt{field}
+record that does not also carry \texttt{manual\_transcription\_attested = true}. A
+statement therefore cannot enter the graded corpus without an explicit human attestation
+that it was listened to and transcribed by hand.
+
+All \CorpusAttested\ statements in this corpus carry that attestation, and
+\texttt{tests/test\_field\_corpus.py} fails the build if any of them loses it, if a
+statement becomes unattributable, or if a raw transcription is silently altered.
+
+Statement revisions are append-only: editing a statement creates a new revision rather
+than overwriting history, so the wording originally heard remains recoverable. Statement
+identifiers and collector identity are assigned server-side from the signed-in account, so
+attribution cannot be mistyped or reassigned by a later editor.
+
+\begin{keypoint}[Why the \texttt{demo} source kind still exists]
+The pipeline was developed before collection finished, which required synthetic examples.
+Rather than delete that capability, \texttt{demo} remains a distinct, permanently
+unattestable source kind, and \texttt{AnalysisSnapshot.is\_field\_only()} lets any export
+prove it contains no synthetic examples. The corpus reported here contains none.
+\end{keypoint}
+
+\subsection{The collected statements}
+
+The full set of raw transcriptions appears in Section~\ref{sec:results}, printed exactly as
+written down and paired with the verdict the grammar returns for each, so the collected
+data and the result it produces can be read together rather than in separate appendices.
+
+\subsection{Topic coverage}
+
+The assignment lists ten themes. The analyzer models \TopicCount\ topics, matched by an
+evidence-cited keyword table (\texttt{TOPIC\_KEYWORDS} in \texttt{core/analysis.py}). A
+topic is always reported together with the exact canonical words that triggered it, so a
+reviewer can see precisely why a label was attached; topic matching never influences
+whether a statement is grammatically accepted.
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Required theme} & \textbf{Topic rule} \\
+\midrule
+Taxi and commuting issues & \term{commuting} \\
+Poor internet connectivity & \term{internet} \\
+Limited electricity supply & \term{electricity} \\
+Market bargaining & \term{market\_bargaining} \\
+Rainy season struggles & \term{rain} \\
+Fuel scarcity & \term{fuel} \\
+Roadside business interactions & \term{roadside\_business} \\
+Bendskin communication & \term{bendskin} \\
+Security announcements or checkpoints & \term{security} \\
+Life at the ICT University & \term{university} \\
+\midrule
+\multicolumn{2}{@{}l@{}}{\small Added from observed vocabulary: \term{food\_and\_drink},
+\term{family}, \term{greetings}, \term{nightlife}, \term{housing}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The five additional topics were not planned. They were added because vocabulary kept
+appearing in the collected data that none of the ten prescribed themes covered --- food and
+drink, family relations, greeting routines, nightlife and housing --- and discarding those
+statements would have biased the corpus towards the themes we expected to find.

@@ -3,18 +3,47 @@ services:
     build: .
     image: francanglais-studio-api:local
     restart: unless-stopped
-    # Loopback-only by default, per the production plan: bind behind a reverse proxy,
-    # never expose the app port directly. Override with `ports: ["8010:8000"]` if you
-    # genuinely need it reachable without a proxy (e.g. local testing).
+
+    # Loopback-only: bind behind a reverse proxy, never expose the app port directly.
+    # Set API_HOST_PORT in .env if the default is taken; it must match proxy_pass in
+    # deploy/nginx/francanglais.duckdns.org.conf.
     ports:
-      - "127.0.0.1:8010:8000"
+      - "127.0.0.1:${API_HOST_PORT:-8010}:8000"
+
     environment:
       YAOUNDE_ENV: production
       YAOUNDE_DATABASE_URL: sqlite:////app/data/app.db
-      # Comma-separated list of frontend origins allowed to call this API with cookies.
-      YAOUNDE_CORS_ORIGINS: https://example.com
+      # Browser origins allowed to call this API with cookies. The app compares the
+      # Origin header against this list and cannot infer its own public HTTPS origin
+      # from behind Nginx, so a deployment MUST set this to the real domain.
+      YAOUNDE_CORS_ORIGINS: ${YAOUNDE_CORS_ORIGINS:-http://127.0.0.1:5175,http://localhost:5175}
+      # Shared registration code for POST /api/auth/signup. Empty disables self-service
+      # registration entirely; create accounts with `yaounde-analyzer provision-user`.
+      YAOUNDE_SIGNUP_CODE: ${YAOUNDE_SIGNUP_CODE:-}
+      YAOUNDE_SESSION_SECONDS: ${YAOUNDE_SESSION_SECONDS:-28800}
+
+    # Overrides the image CMD; the entrypoint still runs migrations first.
+    # --proxy-headers makes the app trust Nginx's X-Forwarded-Proto/For, so it sees
+    # https and the real client IP rather than http and the proxy's address.
+    command:
+      - uvicorn
+      - yaounde_analyzer.api.asgi:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+
     volumes:
       - francanglais-data:/app/data
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   francanglais-data:
