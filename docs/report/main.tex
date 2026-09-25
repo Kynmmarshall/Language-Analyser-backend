@@ -1,11 +1,10 @@
 % =============================================================================
 %  Francanglais Studio -- CS4110 Compiler Construction final report
+%  Combined Software Requirements Specification and Software Design Document
 %  The ICT University, Summer 2026
 %
-%  Build:   python tools/export_tables.py      (regenerate data tables)
-%           python tools/render_diagrams.py    (regenerate PlantUML figures)
-%           latexmk -pdf main.tex
-%  or simply:  pwsh ./build.ps1
+%  Build:  pwsh ./build.ps1        (tables -> diagrams -> latexmk)
+%  or:     latexmk -pdf main.tex
 % =============================================================================
 \documentclass[11pt,a4paper]{article}
 
@@ -14,59 +13,53 @@
 
 \begin{document}
 
-% ----------------------------------------------------------------- title page
-\begin{titlepage}
-\centering
-\vspace*{1.2cm}
+\input{cover}
 
-{\large\textsc{\color{ictnavy}Faculty of Information and Communication Technologies}}\\[0.3em]
-{\large\textsc{\color{ictblue}The ICT University \quad\textbullet\quad Summer 2026}}\\[2.4cm]
+% ------------------------------------------------------------- front matter
+\pagenumbering{roman}
+\setcounter{page}{1}
 
-{\color{ictorange}\rule{0.62\linewidth}{1.2pt}}\\[0.9em]
-{\Huge\bfseries\color{ictnavy} Francanglais Studio}\\[0.7em]
-{\Large\color{ictblue} Lexical and Syntactic Analysis of\\ Informal Urban Communication in Yaound\'e}\\[0.9em]
-{\color{ictorange}\rule{0.62\linewidth}{1.2pt}}\\[2.2cm]
+\input{sections/00-abstract}
+\clearpage
 
-{\large\bfseries Final Examination Report}\\[0.5em]
-{CS4110 -- Compiler Construction \quad\textbullet\quad Credit Value 6}\\[0.4em]
-{Instructor: Engr.\ Tanwi Nkiamboh}\\[2.2cm]
-
-\begin{tcolorbox}[width=0.78\linewidth, colback=ictpanel, colframe=ictrule,
-                  arc=2pt, boxrule=0.8pt]
-\centering
-{\bfseries\color{ictnavy} Prepared by the project team}\\[0.6em]
-\begin{tabular}{@{}ll@{}}
-Kamdeu Yamdjeuson Neil Marshall & ICTU20241386 \\
-Eyong Seanna Tabe & ICTU20241297 \\
-Tuheu Tchoubi Pempeme Moussa Fahdil & ICTU20241393 \\
-\end{tabular}
-\end{tcolorbox}
-
-\vfill
-{\small\color{ictgrey}
-Grammar specification \texttt{\GrammarVersion} \quad\textbullet\quad
-Lexicon \texttt{\LexiconVersion} \quad\textbullet\quad
-\today}
-\end{titlepage}
-
-% ------------------------------------------------------------------- contents
 \tableofcontents
-\newpage
+\clearpage
 
-% -------------------------------------------------------------------- content
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ============================ PART I ========================================
+\parttitle{Part I}{Overview}
 \input{sections/01-introduction}
-\input{sections/02-data-collection}
-\input{sections/03-lexical-analysis}
-\input{sections/04-syntactic-analysis}
-\input{sections/05-implementation}
-\input{sections/06-results}
-\input{sections/07-complexity}
-\input{sections/08-architecture}
-\input{sections/09-conclusion}
 
+% ============================ PART II =======================================
+\parttitle{Part II}{Software Requirements Specification}
+\input{sections/02-srs}
+
+% ============================ PART III ======================================
+\parttitle{Part III}{Software Design Document}
+\input{sections/03-sdd}
+
+% ============================ PART IV =======================================
+\parttitle{Part IV}{Compiler Construction}
+\input{sections/04-data-collection}
+\input{sections/05-lexical-analysis}
+\input{sections/06-token-statistics}
+\input{sections/07-syntactic-analysis}
+\input{sections/08-parser-implementation}
+
+% ============================ PART V ========================================
+\parttitle{Part V}{Evaluation and Discussion}
+\input{sections/09-results}
+\input{sections/10-complexity}
+\input{sections/11-conclusion}
+
+% ============================ APPENDICES ====================================
 \appendix
+\parttitle{Appendices}{Supporting Evidence}
 \input{sections/A1-grammar-listings}
 \input{sections/A2-lexicon}
 \input{sections/A3-screenshots}
+\input{sections/A4-reproduction}
 
 \end{document}

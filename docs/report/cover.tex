@@ -1,0 +1,78 @@
+% ---------------------------------------------------------------------------
+% Cover page. Full-bleed deep-green field, gold rule, app logo, team block.
+% The field height (FIELD) must clear ALL white text above the gold rule --
+% anything that overflows lands white-on-white and disappears.
+% ---------------------------------------------------------------------------
+\begin{titlepage}
+\thispagestyle{empty}
+
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[fcdeep] (current page.north west) rectangle
+                ([yshift=-16.6cm]current page.north east);
+  % Lighter band adds depth behind the title block.
+  \fill[fcaccent, opacity=0.5]
+        ([yshift=-12.9cm]current page.north west) rectangle
+        ([yshift=-16.6cm]current page.north east);
+  \fill[fcgold] ([yshift=-16.6cm]current page.north west) rectangle
+                ([yshift=-16.84cm]current page.north east);
+  % Thin keyline echoing the logo's rounded square.
+  \draw[fcgold, line width=1pt, opacity=0.45, rounded corners=4pt]
+        ([xshift=1.5cm, yshift=-1.4cm]current page.north west) rectangle
+        ([xshift=-1.5cm, yshift=-15.95cm]current page.north east);
+\end{tikzpicture}
+
+\vspace*{0.45cm}
+\begin{center}
+  {\color{white}\footnotesize\textsc{The ICT University\quad\textbullet\quad Yaound\'e, Cameroon}}\\[0.16cm]
+  {\color{fcgold}\footnotesize\textsc{Faculty of Information and Communication Technologies}}
+
+  \vspace{0.70cm}
+  \includegraphics[width=3.3cm]{figures/logo.png}
+
+  \vspace{0.55cm}
+  {\color{white}\Huge\bfseries Francanglais Studio}\\[0.32cm]
+  {\color{fcgold}\large A Lexical and Syntactic Analyzer for}\\[0.10cm]
+  {\color{fcgold}\large Informal Urban Communication in Yaound\'e}
+
+  \vspace{0.62cm}
+  {\color{white!55}\rule{4.0cm}{0.7pt}}
+
+  \vspace{0.52cm}
+  {\color{white}\normalsize Software Requirements Specification}\\[0.10cm]
+  {\color{white}\normalsize \&\ Software Design Document}
+
+  \vspace{0.42cm}
+  {\color{fcgold}\footnotesize\textsc{Final Examination Report}}
+
+  % ----------------------------------------------------- below the gold rule
+  \vspace{1.45cm}
+
+  \begin{tcolorbox}[enhanced, width=0.88\linewidth, colback=white,
+                    colframe=fcrule, boxrule=1pt, arc=3pt,
+                    left=12pt, right=12pt, top=9pt, bottom=9pt]
+    \centering
+    {\color{fcdeep}\bfseries\small SUBMITTED BY}\\[0.32cm]
+    {\small
+    \begin{tabular}{@{}p{7.0cm}l@{}}
+      \textbf{Kamdeu Yamdjeuson Neil Marshall}     & \texttt{ICTU20241386} \\[1.5pt]
+      \textbf{Eyong Seanna Tabe}                   & \texttt{ICTU20241297} \\[1.5pt]
+      \textbf{Tuheu Tchoubi Pempeme Moussa Fahdil} & \texttt{ICTU20241393} \\
+    \end{tabular}}
+  \end{tcolorbox}
+
+  \vspace{0.75cm}
+  {\small
+  \begin{tabular}{@{}r@{\hskip 10pt}l@{}}
+    \color{fcgrey}Course      & \textbf{CS4110 -- Compiler Construction} \ (6 credits) \\
+    \color{fcgrey}Instructor  & \textbf{Engr.\ Tanwi Nkiamboh} \\
+    \color{fcgrey}Department  & \textbf{ICT} \\
+    \color{fcgrey}Examination & \textbf{Tuesday, 29 September 2026} \textbullet\ B.S. Chumbow Hall \\
+  \end{tabular}}
+
+  \vfill
+  {\color{fcgrey}\scriptsize
+   Grammar \texttt{\GrammarVersion}\quad\textbullet\quad
+   Lexicon \texttt{\LexiconVersion}\quad\textbullet\quad
+   Compiled \today}
+\end{center}
+\end{titlepage}

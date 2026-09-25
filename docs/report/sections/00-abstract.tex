@@ -1,0 +1,33 @@
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+Yaound\'e is a multilingual city in which ordinary conversation mixes French, English,
+Pidgin, Fulfulde and Ewondo with locally coined slang. This report documents
+\textbf{Francanglais Studio}, a complete compiler front end --- scanner, lexer, grammar
+preparation, LL(1) table construction and a table-driven predictive parser --- built to
+perform lexical and syntactic analysis on speech actually collected in the city, and
+wrapped in a web application so that every compiler artefact is directly inspectable.
+
+The team collected \CorpusTotal\ statements by hand across taxis, markets, roadside
+businesses, neighbourhoods and the university, cross-checked each transcription, and
+recorded the attestation as a software-enforced invariant rather than a claim in prose.
+From that data we built a \LexiconTotal-entry lexicon spanning \OriginCount\ donor
+languages and \TerminalCount\ terminal classes, authored a \ProductionCount-production
+context-free grammar in its natural left-recursive form, and mechanically transformed it
+in \LedgerSteps\ recorded steps into an LL(1) grammar whose parsing table is verified
+conflict-free by an automated test. The resulting parser accepts \CorpusAccepted\ of the
+\CorpusTotal\ collected statements; the \CorpusRejected\ rejections are documented down to
+the specific LL(1) conflict that prevents a fix rather than papered over.
+
+This document is organised as a combined Software Requirements Specification
+(Part~\ref{part:srs}) and Software Design Document (Part~\ref{part:sdd}), followed by the
+compiler construction work itself (Part~IV) and its evaluation (Part~V). Every table of
+data it contains is exported directly from the running analyzer by a build script, so the
+document cannot drift from the software it describes.
+
+\vspace{0.8em}
+\begin{keypoint}[Reproducibility]
+No figure or table in this report was transcribed by hand. Running
+\texttt{build.ps1} regenerates the data tables from the live analyzer, re-renders the
+PlantUML diagrams, and recompiles this PDF. Appendix~\ref{app:repro} gives the procedure.
+\end{keypoint}

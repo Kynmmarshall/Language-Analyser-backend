@@ -7,3 +7,5 @@
 *.toc
 *.synctex.gz
 main.pdf
+
+latexmk-*.log

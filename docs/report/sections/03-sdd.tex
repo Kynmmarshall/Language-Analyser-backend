@@ -1,0 +1,181 @@
+\section{Software Design Document}\label{part:sdd}
+
+\subsection{Architectural overview}
+
+The system is layered so that the compiler core has no knowledge of the web application
+around it. \texttt{core/} depends on nothing but the standard library and pydantic and can
+be exercised entirely from the command line; the API layer is a thin translation between
+HTTP and core function calls; the database stores corpus records only.
+
+\diagram{architecture.png}{0.93}{System architecture. The compiler core is independent of
+the service and interface layers that surround it.}
+
+\begin{keypoint}[Why derived analysis is never stored]
+The database holds statements, not results. Every analysis is recomputed on request from
+the current grammar and lexicon, so a specification change can never leave stale verdicts
+behind --- which, in a document generated from live data, is the difference between a
+correct report and a quietly wrong one. This satisfies \req{NFR-2} and \req{NFR-8}.
+\end{keypoint}
+
+\subsection{Module decomposition}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l l p{5.5cm} l@{}}
+\toprule
+\textbf{Layer} & \textbf{Module} & \textbf{Responsibility} & \textbf{Satisfies} \\
+\midrule
+\multirow{9}{*}{\rotatebox{90}{\textbf{Compiler core}}}
+ & \texttt{core/text.py}     & Scanning, canonicalisation, accent folding & \req{FR-9}, \req{FR-15} \\
+ & \texttt{core/lexer.py}    & Tokenisation, lexicon resolution & \req{FR-11}--\req{FR-14}, \req{FR-16} \\
+ & \texttt{core/lexicon.py}  & Entry storage, lookup indices, homographs & \req{FR-12}, \req{FR-15} \\
+ & \texttt{core/grammar.py}  & Grammar model, transformations, ledger & \req{FR-18}--\req{FR-21} \\
+ & \texttt{core/ll1.py}      & FIRST/FOLLOW, table construction & \req{FR-22}, \req{FR-23} \\
+ & \texttt{core/parser.py}   & Predictive parser & \req{FR-24}--\req{FR-26} \\
+ & \texttt{core/suggest.py}  & Deterministic repair suggestions & \req{FR-27} \\
+ & \texttt{core/analysis.py} & Snapshots, frequencies, topic matching & \req{FR-17}, \req{FR-32} \\
+ & \texttt{core/corpus.py}   & Validation, revisions, provenance & \req{FR-1}--\req{FR-7} \\
+\midrule
+\multirow{2}{*}{\rotatebox{90}{\textbf{Svc}}}
+ & \texttt{api/main.py}      & Application factory, middleware & \req{NFR-5} \\
+ & \texttt{api/routes/}      & analysis, auth, corpus, export, grammar, statistics & \req{FR-8}, \req{FR-28}--\req{FR-31} \\
+\midrule
+\multirow{2}{*}{\rotatebox{90}{\textbf{UI}}}
+ & \texttt{cli.py}           & Offline analysis, seeding, provisioning & \req{FR-24} \\
+ & React front end           & Analyser, grammar explorer, corpus manager & \req{FR-28}--\req{FR-32} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Processing pipeline}
+
+Each stage is a pure function over immutable data:
+\texttt{scan} $\rightarrow$ \texttt{lex} $\rightarrow$ \texttt{prepare} $\rightarrow$
+\texttt{parse} $\rightarrow$ \texttt{analyse}. No stage mutates its input, so a snapshot
+is exactly reproducible from the statement text plus the grammar and lexicon versions it
+was produced under --- both of which are stamped into the snapshot (\req{NFR-1}).
+
+\diagram{pipeline.png}{0.94}{End-to-end pipeline from raw statement to analysis snapshot.}
+
+\subsection{Data design}
+
+\subsubsection*{Domain model}
+
+\diagram{class-model.png}{0.96}{Core domain model. All types are frozen pydantic models
+with \texttt{extra="forbid"}.}
+
+Every model is immutable and refuses unknown fields (\req{NFR-4}). That is a deliberate
+defence: a mistyped field name raises at construction time rather than silently producing
+a snapshot with a missing attribute --- in a data-analysis pipeline, the difference between
+a crash and a wrong number in this report.
+
+\subsubsection*{Persistence schema}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{8.4cm}@{}}
+\toprule
+\textbf{Table} & \textbf{Purpose and key columns} \\
+\midrule
+\texttt{users} & Collector accounts; Argon2 password hashes. \\
+\texttt{auth\_sessions} & Server-side sessions with CSRF tokens and expiry. \\
+\texttt{statement\_records} & Statement identity; points at the currently published revision. \\
+\texttt{statement\_revisions} & Append-only revisions: raw text, source kind, attestation flag, collector, topics, timestamp. \\
+\texttt{analysis\_snapshots} & Optional persisted results, pinned to one exact revision and specification hash. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Separating \emph{identity} from \emph{revision} is what makes \req{FR-6} enforceable:
+a record's history is a list of immutable rows, and publication is a pointer into that
+list rather than a mutable flag on the statement itself.
+
+\subsubsection*{Specification data}
+
+Lexicon, grammar and the collected corpus are versioned JSON specifications bundled inside
+the installed package. Bundling rather than reading from the repository root is what makes
+them present in the container image, so the deployed service and the local test suite load
+byte-identical data.
+
+\subsection{Interface design}
+
+\subsubsection*{Request flow}
+
+\diagram{sequence-analyze.png}{0.94}{Sequence of an analyse request from browser to parser
+and back.}
+
+\subsubsection*{Front-end views}
+
+\begin{description}[leftmargin=1.4em, style=nextline, font=\bfseries]
+  \item[Analyser]
+    Type or paste a statement and see the token stream, derivation, verdict, frequency
+    tables and detected topics. Individual tokens expand to reveal canonical form,
+    terminal class, donor language and gloss, so the lexicon is inspectable without
+    leaving the analysis.
+  \item[Grammar explorer]
+    The original grammar, the transformation ledger, the transformed grammar, FIRST/FOLLOW
+    sets, the LL(1) table and the full lexicon --- with incremental search and an
+    explanation of what each section means and why the transformation was necessary.
+  \item[Corpus manager]
+    Add, edit and review statements. Identifiers and collector identity are assigned
+    server-side; edits create revisions rather than overwriting.
+\end{description}
+
+\subsection{Security design}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{8.6cm}@{}}
+\toprule
+\textbf{Control} & \textbf{Implementation} \\
+\midrule
+Authentication  & Argon2 password hashing; opaque server-side session tokens. \\
+Session cookies & \texttt{HttpOnly}, \texttt{Secure} in production, \texttt{SameSite=Lax}. \\
+CSRF            & Double-submit token required on every state-changing request. \\
+Origin checking & Requests that predate a session are rejected unless their \texttt{Origin} matches the service or a configured front-end origin. \\
+Least privilege & The container runs as a non-root, non-login user; only the data volume is writable. \\
+Exposure        & The application port binds to loopback only and is reached through a reverse proxy. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Deployment view}
+
+The service is containerised and runs behind Nginx, which terminates TLS, serves the built
+single-page application from disk and reverse-proxies \texttt{/api} to the container on a
+loopback port. The browser therefore sees one origin, so session cookies work without
+relaxing \texttt{SameSite} and no cross-origin preflight is involved.
+
+The image ships the built Python wheel together with the Alembic configuration and
+migration scripts; development-only material is deliberately excluded, and seeding is
+exposed as a subcommand of the installed package so it behaves identically inside and
+outside the container. Migrations are applied by the entrypoint before the server starts.
+
+\subsection{Key design decisions}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.5cm} p{4.4cm} p{5.0cm}@{}}
+\toprule
+\textbf{Decision} & \textbf{Alternative rejected} & \textbf{Rationale} \\
+\midrule
+Hand-written lexer and parser & \texttt{lex}/\texttt{yacc} or a parser generator &
+  The transformations are the assessed work; generating them would hide the reasoning. \\
+\addlinespace
+Author the grammar left-recursively & Write it pre-factored &
+  Pre-factoring by hand produces an empty ledger and loses the evidence for \req{FR-21}. \\
+\addlinespace
+Donor language per \emph{token} & Per statement &
+  Speakers switch mid-clause, so no span of text holds a single language. \\
+\addlinespace
+Folding as a fallback tier & Fold everything by default &
+  Folding collapses four attested French homograph pairs that differ only by a diacritic. \\
+\addlinespace
+Two lexicon tiers, separately labelled & One undifferentiated lexicon &
+  Keeps the corpus-attested evidence distinguishable from dictionary vocabulary. \\
+\addlinespace
+Recompute analysis on request & Cache derived results &
+  A specification change can never leave a stale verdict published. \\
+\bottomrule
+\end{tabular}
+\end{center}

@@ -1,0 +1,178 @@
+\section{Software Requirements Specification}\label{part:srs}
+
+\subsection{Purpose and intended audience}
+
+This part states what Francanglais Studio must do, independently of how it is built. It
+is written for the course examiner assessing the deliverable, and for any future
+contributor who needs to change the system without re-deriving its obligations. Design
+and implementation choices are deferred to Part~\ref{part:sdd}.
+
+\subsection{Stakeholders and actors}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{4.4cm} p{6.1cm}@{}}
+\toprule
+\textbf{Actor} & \textbf{Description} & \textbf{Primary goals} \\
+\midrule
+Visitor &
+  Any unauthenticated user of the public site &
+  Analyse free text; read a word's meaning; request a repair hint; browse the grammar and lexicon \\
+\addlinespace
+Collector &
+  Authenticated team member who gathered field data &
+  Submit collected statements; edit statement revisions \\
+\addlinespace
+Reviewer &
+  Team member cross-checking another member's transcription &
+  Review and publish revisions; view corpus statistics \\
+\addlinespace
+Instructor &
+  Course examiner assessing the work &
+  Inspect the grammar derivation and LL(1) table; export an evidence snapshot \\
+\addlinespace
+Maintainer &
+  Operator of the deployed instance (no application role) &
+  Seed the corpus, provision accounts, apply migrations \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\diagram{use-cases.png}{0.86}{Use-case model. Corpus editing and evidence export are
+restricted to authenticated collectors; analysis and specification browsing are public.}
+
+\subsection{Functional requirements}
+
+Requirements are grouped by pipeline stage. Each carries an identifier used throughout
+Part~\ref{part:sdd} and the verification table in Section~\ref{sec:verification}.
+
+\subsubsection*{Corpus and provenance}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{9.3cm} l@{}}
+\toprule
+\textbf{Id} & \textbf{Requirement} & \textbf{Priority} \\
+\midrule
+\req{FR-1} & The system shall store statements transcribed manually from speech heard in Yaound\'e. & Must \\
+\req{FR-2} & Each statement shall record a source kind of either \texttt{field} or \texttt{demo}. & Must \\
+\req{FR-3} & The system shall reject any \texttt{field} statement that does not carry an explicit manual-transcription attestation. & Must \\
+\req{FR-4} & Each statement shall be attributed to the collector who transcribed it. & Must \\
+\req{FR-5} & Statement identifiers and collector identity shall be assigned server-side, not supplied by the client. & Must \\
+\req{FR-6} & Edits shall create a new revision; existing revisions shall be immutable. & Must \\
+\req{FR-7} & The system shall preserve raw transcriptions byte-for-byte, including slang, accents and errors. & Must \\
+\req{FR-8} & The system shall export the corpus with analysis results as JSON and CSV. & Should \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Lexical analysis}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{9.3cm} l@{}}
+\toprule
+\textbf{Id} & \textbf{Requirement} & \textbf{Priority} \\
+\midrule
+\req{FR-9}  & The scanner shall segment input into typed character runs using documented regular expressions. & Must \\
+\req{FR-10} & Every token shall retain the source span it came from. & Must \\
+\req{FR-11} & The lexer shall classify each word into one of the defined terminal classes. & Must \\
+\req{FR-12} & Each token shall carry a canonical form, donor-language label and gloss. & Must \\
+\req{FR-13} & The lexer shall recognise fixed multiword expressions as single tokens. & Must \\
+\req{FR-14} & Multiword matching shall not cross a punctuation or separator boundary. & Must \\
+\req{FR-15} & Lookup shall tolerate missing or added diacritics without losing distinctions between attested homographs. & Must \\
+\req{FR-16} & Unrecognised words shall be emitted as \texttt{UNKNOWN} tokens, never discarded. & Must \\
+\req{FR-17} & The system shall report raw, canonical and terminal-class token frequencies. & Must \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Syntactic analysis}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{9.3cm} l@{}}
+\toprule
+\textbf{Id} & \textbf{Requirement} & \textbf{Priority} \\
+\midrule
+\req{FR-18} & The grammar shall be authored as a context-free grammar in natural form, left recursion included. & Must \\
+\req{FR-19} & The system shall eliminate left recursion mechanically. & Must \\
+\req{FR-20} & The system shall apply left factoring until no common prefixes remain. & Must \\
+\req{FR-21} & Every transformation shall be recorded with the rules it consumed and produced. & Must \\
+\req{FR-22} & The system shall compute FIRST and FOLLOW sets and construct an LL(1) parsing table. & Must \\
+\req{FR-23} & The system shall detect and report parsing-table conflicts rather than resolving them silently. & Must \\
+\req{FR-24} & The parser shall read the token stream and return an explicit accept or reject verdict. & Must \\
+\req{FR-25} & An accepted parse shall return the derivation as an ordered list of production identifiers. & Must \\
+\req{FR-26} & A rejection shall report the error position and the set of terminals that would have been legal. & Must \\
+\req{FR-27} & The system shall offer deterministic repair suggestions for rejected input. & Should \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Presentation and access}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{9.3cm} l@{}}
+\toprule
+\textbf{Id} & \textbf{Requirement} & \textbf{Priority} \\
+\midrule
+\req{FR-28} & Visitors shall analyse a statement without authenticating; such input shall not be stored. & Must \\
+\req{FR-29} & The interface shall display the original grammar, the ledger, the transformed grammar, FIRST/FOLLOW and the LL(1) table. & Must \\
+\req{FR-30} & The lexicon shall be searchable incrementally, tolerant of missing accents. & Should \\
+\req{FR-31} & Corpus access and evidence export shall require authentication. & Must \\
+\req{FR-32} & The system shall detect conversation topics and cite the words that triggered each. & Should \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Non-functional requirements}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l l p{7.9cm}@{}}
+\toprule
+\textbf{Id} & \textbf{Quality} & \textbf{Requirement} \\
+\midrule
+\req{NFR-1} & Determinism    & Identical input under identical grammar and lexicon versions shall always produce an identical result. No randomness, no model inference. \\
+\req{NFR-2} & Traceability   & Every reported claim shall cite its evidence: a rule id, a statement id or a source span. \\
+\req{NFR-3} & Correctness    & The parsing table shall be conflict-free, enforced by an automated test rather than asserted. \\
+\req{NFR-4} & Integrity      & Domain objects shall be immutable and reject unknown fields at construction. \\
+\req{NFR-5} & Security       & Session cookies shall be \texttt{HttpOnly} and \texttt{Secure}; state-changing requests shall require a CSRF token and pass a same-origin check. \\
+\req{NFR-6} & Accessibility  & The interface shall meet WCAG 2.1 AA, verified by automated scans on every view. \\
+\req{NFR-7} & Portability    & The service shall run as a single container with no external database server. \\
+\req{NFR-8} & Reproducibility& Report figures and tables shall be generated from the running system, never transcribed. \\
+\req{NFR-9} & Performance    & Analysis of a single statement shall complete well within one second on modest hardware. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Constraints and assumptions}
+
+\begin{description}[leftmargin=1.4em, style=nextline, font=\bfseries]
+  \item[Single target variety]
+    The analyzer accepts Cameroonian Francanglais only. The target is fixed in code as
+    \texttt{TARGET\_VARIETY}; requests naming any other variety are refused rather than
+    silently analysed under the wrong specification.
+  \item[No parser generator]
+    The scanner, lexer and parser are written by hand. Using \texttt{lex}/\texttt{yacc}
+    would hide precisely the transformations the coursework assesses.
+  \item[One token of lookahead]
+    The parser is LL(1) by construction. Any grammar rule that cannot be expressed within
+    that limit must be reported as a limitation rather than worked around.
+  \item[Ethical collection]
+    Speakers are informed and consent obtained before identifiable conversation is
+    retained; records carry collector identifiers rather than speaker identities.
+  \item[Assumption]
+    Collectors are familiar enough with Francanglais to transcribe accurately, and a
+    second member independently checks each transcription.
+\end{description}
+
+\subsection{Acceptance criteria}
+
+The system is considered to meet its requirements when: the corpus contains at least ten
+manually attested field statements, each attributable to a collector (\req{FR-1}--\req{FR-7});
+the constructed parsing table contains no conflicting cell (\req{FR-22}, \req{NFR-3});
+every collected statement receives an explicit accept or reject verdict with a derivation
+or an expected-terminal set (\req{FR-24}--\req{FR-26}); and the full automated suite
+passes. Section~\ref{sec:verification} reports the measured outcome against each of these.

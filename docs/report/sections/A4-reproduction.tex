@@ -1,0 +1,75 @@
+\section{Reproducing This Report}\label{app:repro}
+
+Every table and figure is generated from the running system. Nothing is transcribed by
+hand, so the document cannot drift from the software it describes (\req{NFR-8}).
+
+\subsection{Build}
+
+\begin{lstlisting}[language=bash, numbers=none]
+cd docs/report
+pwsh ./build.ps1
+\end{lstlisting}
+
+That performs three steps in order:
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.15em]
+  \item \texttt{tools/export\_tables.py} --- re-exports every data table in
+        \texttt{generated/} directly from the analyzer.
+  \item \texttt{tools/render\_diagrams.py} --- renders \texttt{diagrams/*.puml} to
+        \texttt{figures/*.png} via the PlantUML server.
+  \item \texttt{latexmk -pdf main.tex} --- compiles this PDF.
+\end{enumerate}
+
+To publish from a live corpus database instead of the bundled specification:
+
+\begin{lstlisting}[language=bash, numbers=none]
+python tools/export_tables.py --database sqlite:///../../data/app.db --field-only
+\end{lstlisting}
+
+Application screenshots (Appendix~\ref{app:screens}) are captured separately, from the
+front-end repository, by driving a real browser against the running service:
+
+\begin{lstlisting}[language=bash, numbers=none]
+node scripts/capture-report-screenshots.mjs
+\end{lstlisting}
+
+\subsection{Generated artefacts}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{7.6cm}@{}}
+\toprule
+\textbf{Artefact} & \textbf{Source} \\
+\midrule
+\texttt{facts.tex}            & Counts used throughout the prose as \LaTeX{} macros \\
+\texttt{regexes.tex}          & \texttt{core/text.py} compiled patterns \\
+\texttt{collectors.tex}       & Corpus records grouped by collector \\
+\texttt{lexicon-summary.tex}, \texttt{origin-summary.tex} & Lexicon by terminal and donor language \\
+\texttt{lexicon-corpus.tex}   & Corpus-attested entries with evidence ids \\
+\texttt{grammar-original.tex}, \texttt{grammar-transformed.tex} & Grammar before and after transformation \\
+\texttt{ledger.tex}           & Transformation steps \\
+\texttt{first-follow.tex}, \texttt{ll1-table.tex} & FIRST/FOLLOW sets and parsing table \\
+\texttt{corpus-results.tex}   & Per-statement accept/reject verdicts \\
+\texttt{freq-*.tex}           & Raw, canonical and terminal frequencies \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Source layout}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l l@{}}
+\toprule
+\textbf{Path} & \textbf{Contents} \\
+\midrule
+\texttt{src/yaounde\_analyzer/core/}  & Compiler core (Section~\ref{part:sdd}) \\
+\texttt{src/yaounde\_analyzer/api/}   & FastAPI routes and schemas \\
+\texttt{src/yaounde\_analyzer/specs/} & Lexicon, grammar and corpus specifications \\
+\texttt{src/yaounde\_analyzer/cli.py} & Command-line interface \\
+\texttt{tests/}                       & 11 test modules, 158 tests \\
+\texttt{migrations/}                  & Alembic database migrations \\
+\texttt{docs/report/}                 & This report and its build tooling \\
+\bottomrule
+\end{tabular}
+\end{center}

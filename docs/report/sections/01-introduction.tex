@@ -1,62 +1,102 @@
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 
-\subsection{The assignment}
+\subsection{Project context}
 
-The CS4110 final examination asks each group of three to build a mini-language analyzer
-over real, manually transcribed speech collected in Yaound\'e, a city where everyday
-conversation mixes French, English, Pidgin, Fulfulde and Ewondo with locally invented
-slang. The graded work has five components: a corpus of 10--15 authentic statements; a
-lexical specification with regular-expression token types and a custom lexical analyzer;
-a context-free grammar reduced to LL(1) form with left-recursion removal, left factoring,
-FIRST/FOLLOW sets and a parsing table; a working parser that accepts or rejects the
-collected sentences; and this report together with a live demonstration.
+Yaound\'e is a multilingual city. In a single taxi ride a passenger may hear French
+grammar carrying English verbs, a Pidgin discourse particle, and a noun borrowed from
+Duala or Ewondo --- often inside one sentence. The resulting variety, commonly called
+\emph{Francanglais} or \emph{camfranglais}, has no standard written form, no authoritative
+dictionary, and no fixed orthography. It is nonetheless the everyday working language of
+commuting, market bargaining, roadside trade and campus life.
 
-\subsection{What we built}
+\subsection{Objective}
 
-Rather than a single script, we built \textbf{Francanglais Studio}: a complete compiler
-front end -- scanner, lexer, grammar preparation, LL(1) table construction and a
-table-driven parser -- wrapped in a web application so that every compiler artefact the
-rubric asks to see is directly inspectable rather than buried in console output.
+To design and implement a mini-language analyzer capable of performing lexical and
+syntactic analysis on real spoken expressions collected in Yaound\'e, and to detect
+patterns relating to commuting, market activity, security, weather, transport, electricity
+and everyday transactions.
 
-\begin{keypoint}[Design principle]
+\subsection{Scope}
+
+\textbf{In scope.} Manual collection and transcription of real statements; a hand-written
+scanner and lexer driven by documented regular expressions; a context-free grammar reduced
+to LL(1) form with recorded transformations; FIRST/FOLLOW computation and parsing-table
+construction; a predictive parser returning an explicit accept/reject verdict; token
+frequency and variation analysis; and a web application exposing all of the above.
+
+\textbf{Out of scope.} Semantic analysis, code generation and optimisation --- this is a
+compiler \emph{front end}. Machine translation, speech recognition and statistical
+language modelling are likewise excluded: every decision the analyzer makes is rule-based
+and traceable to a specific lexicon entry or grammar production.
+
+\begin{keypoint}[Guiding design principle]
 The analyzer recognises a \emph{documented subset} of collected speech. It never pretends
-to understand every sentence, never silently drops an unknown word, and never silently
+to understand every sentence, never silently discards an unknown word, and never silently
 resolves a grammar ambiguity. Unknown vocabulary and parsing conflicts are both reported
 explicitly, because those reports are the evidence this report is built on.
 \end{keypoint}
 
-\subsection{Scale of the artefact}
+\subsection{Team and division of work}
+
+Collection was shared across all three members, as the assignment requires. Build
+responsibilities were divided by layer so that each member owned a distinct part of the
+pipeline.
 
 \begin{center}
-\begin{tabular}{@{}lr@{}}
+\small
+\begin{tabular}{@{}p{5.1cm} l p{5.4cm}@{}}
 \toprule
-\textbf{Artefact} & \textbf{Size} \\
+\textbf{Member} & \textbf{Matricule} & \textbf{Primary responsibility} \\
 \midrule
-Statements collected in the field & \CorpusTotal \\
-\quad accepted by the grammar & \CorpusAccepted \\
-Lexicon entries & \LexiconTotal \\
-\quad corpus-attested & \LexiconCorpus \\
-\quad dictionary-derived & \LexiconDictionary \\
-\quad multiword entries & \LexiconMultiword \\
-Grammar terminals & \TerminalCount \\
-Grammar nonterminals (as authored) & \NonterminalCount \\
-Productions (authored / executable) & \ProductionCount\ / \ExecProductionCount \\
-Transformation steps recorded & \LedgerSteps \\
-Donor languages modelled & \OriginCount \\
-Topic rules & \TopicCount \\
+Kamdeu Yamdjeuson Neil Marshall & \texttt{ICTU20241386} &
+  Grammar design, LL(1) transformation and parser; system architecture \\
+\addlinespace
+Eyong Seanna Tabe & \texttt{ICTU20241297} &
+  Lexicon curation, token classification and frequency analysis \\
+\addlinespace
+Tuheu Tchoubi Pempeme Moussa Fahdil & \texttt{ICTU20241393} &
+  Corpus tooling, provenance validation and the web interface \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Every number above, and every table in this report, is exported directly from the running
-analyzer by \texttt{tools/export\_tables.py}. Nothing is transcribed by hand, so the report
-cannot drift from the code it documents.
+\subsection{Scale of the delivered system}
 
-\subsection{How to read this report}
+\begin{center}
+\small
+\begin{tabular}{@{}lr@{\hskip 26pt}lr@{}}
+\toprule
+\textbf{Corpus} & & \textbf{Grammar} & \\
+\midrule
+Statements collected      & \CorpusTotal    & Terminals                    & \TerminalCount \\
+\quad accepted            & \CorpusAccepted & Nonterminals (as authored)   & \NonterminalCount \\
+\quad rejected            & \CorpusRejected & Productions (authored)       & \ProductionCount \\
+Topic rules               & \TopicCount     & Productions (executable)     & \ExecProductionCount \\
+\midrule
+\textbf{Lexicon} & & Transformation steps        & \LedgerSteps \\
+\midrule
+Total entries             & \LexiconTotal   & \textbf{Verification} & \\
+\quad corpus-attested     & \LexiconCorpus  & Backend tests                & 158 \\
+\quad dictionary-derived  & \LexiconDictionary & End-to-end scenarios      & 84 \\
+Multiword entries         & \LexiconMultiword & Donor languages modelled   & \OriginCount \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-Sections~\ref{sec:data}--\ref{sec:results} follow the marking scheme in order: data
-collection, lexical analysis, syntactic analysis, implementation, and the accept/reject
-results. Section~\ref{sec:complexity} answers the required discussion question on why
-Yaound\'e communication is linguistically complex. Section~\ref{sec:architecture} documents
-the surrounding software architecture. Appendices hold the full grammar listings, the
-corpus-attested lexicon and screenshots of the working analyzer.
+\subsection{How this report is organised}
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll p{7.4cm}@{}}
+\toprule
+\textbf{Part} & \textbf{Content} & \textbf{Answers} \\
+\midrule
+I   & Overview & Context, objective, scope \\
+II  & SRS      & What the system must do, and for whom \\
+III & SDD      & How it is structured to do it \\
+IV  & Compiler & Data collection, lexical analysis, grammar, parser \\
+V   & Evaluation & Accept/reject results, linguistic discussion \\
+App.& Evidence & Full grammar, lexicon, screenshots, reproduction \\
+\bottomrule
+\end{tabular}
+\end{center}

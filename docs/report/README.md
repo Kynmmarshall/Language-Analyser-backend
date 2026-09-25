@@ -1,6 +1,27 @@
 # CS4110 Final Report
 
-LaTeX sources for the Francanglais Studio compiler-construction report.
+LaTeX sources for the Francanglais Studio report — a combined **Software Requirements
+Specification** and **Software Design Document** covering the compiler-construction
+coursework.
+
+## Structure
+
+| Part | Sections | Content |
+| --- | --- | --- |
+| I | 1 | Context, objective, scope, team |
+| II | 2 | SRS — actors, FR/NFR tables, constraints, acceptance criteria |
+| III | 3 | SDD — architecture, modules, data/interface/security design |
+| IV | 4–8 | Data collection, lexical analysis, frequencies, grammar, parser |
+| V | 9–11 | Results, linguistic discussion, conclusion |
+| App. | A–D | Grammar reference, lexicon, screenshots, reproduction |
+
+**Page budget.** The exam brief caps the report at 30 pages. The numbered body is kept at
+≤ 31 pages; appendices carry the bulk evidence. Check after any edit:
+
+```powershell
+Select-String main.log -Pattern 'Output written'
+Get-Content main.toc | Select-String 'section.A.'   # where the appendices start
+```
 
 ## Build
 
@@ -67,12 +88,13 @@ as a visible "Screenshot pending" placeholder rather than breaking the build.
 
 | Path | Contents |
 | --- | --- |
-| `main.tex` | Document root: title page, TOC, section includes |
-| `preamble.tex` | Packages, palette, section styling, callout boxes, helper macros |
+| `main.tex` | Document root: front matter, part banners, section includes |
+| `cover.tex` | Title page. The TikZ field height must clear all white text above the gold rule |
+| `preamble.tex` | Packages, palette (mirrors `src/styles/theme.css`), callout boxes, helpers |
 | `sections/` | Hand-written prose, one file per report section |
 | `generated/` | **Auto-generated** tables and fact macros — do not edit |
 | `diagrams/` | PlantUML sources |
-| `figures/` | Rendered diagrams and screenshots |
+| `figures/` | Rendered diagrams, screenshots and the app logo |
 | `tools/` | The two generator scripts |
 
 ## Outstanding before submission
@@ -86,7 +108,9 @@ as a visible "Screenshot pending" placeholder rather than breaking the build.
 - Numbers in prose come from macros defined in `generated/facts.tex`
   (`\LexiconTotal`, `\CorpusAccepted`, `\LedgerSteps`, …). Use the macro, never a literal,
   so the report cannot drift from the code.
-- Callout boxes: `keypoint` (navy), `limitbox` (orange, honest limitations),
+- Requirement ids use `\req{FR-1}` and are referenced from the SDD and the verification
+  table in §9.3. Adding a requirement means updating both.
+- Callout boxes: `keypoint` (green), `limitbox` (amber, honest limitations),
   `todobox` (red, outstanding team actions).
 - Inline helpers: `\term{DET}` for terminals, `\nonterm{Clause}` for nonterminals,
   `\fw{taximan}` for Francanglais forms, `\accepted` / `\rejected` for verdicts.
