@@ -1,0 +1,107 @@
+\section{Requirements}\label{c:srs}
+
+\subsection{Actors}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{4.2cm} p{6.3cm}@{}}
+\toprule
+\textbf{Actor} & \textbf{Description} & \textbf{Primary goals} \\
+\midrule
+Visitor    & Unauthenticated user & Analyse free text; read a word's meaning; request a repair hint; browse grammar and lexicon \\
+Collector  & Team member who gathered field data & Submit collected statements; edit revisions \\
+Reviewer   & Member cross-checking a transcription & Review and publish revisions; view statistics \\
+Instructor & Course examiner & Inspect the derivation and LL(1) table; export an evidence snapshot \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\diagram{use-cases.png}{0.72}{Use-case model. Corpus editing and evidence export require
+authentication; analysis and specification browsing are public.}
+
+\subsection{Functional requirements}
+
+\begin{center}
+\scriptsize
+\begin{tabular}{@{}l p{11.6cm}@{}}
+\toprule
+\textbf{Id} & \textbf{Requirement} \\
+\midrule
+\multicolumn{2}{@{}l@{}}{\textit{Corpus and provenance}}\\
+\req{FR-1} & Store statements transcribed manually from speech heard in Yaound\'e. \\
+\req{FR-2} & Record a source kind of either \texttt{field} or \texttt{demo} on every statement. \\
+\req{FR-3} & Reject any \texttt{field} statement lacking an explicit manual-transcription attestation. \\
+\req{FR-4} & Attribute each statement to the collector who transcribed it. \\
+\req{FR-5} & Assign statement identifiers and collector identity server-side, never from the client. \\
+\req{FR-6} & Create a new revision on edit; existing revisions are immutable. \\
+\req{FR-7} & Preserve raw transcriptions byte-for-byte, including slang, accents and errors. \\
+\req{FR-8} & Export the corpus with analysis results as JSON and CSV. \\
+\midrule
+\multicolumn{2}{@{}l@{}}{\textit{Lexical analysis}}\\
+\req{FR-9}  & Segment input into typed character runs using documented regular expressions. \\
+\req{FR-10} & Retain the source span every token came from. \\
+\req{FR-11} & Classify each word into one of the defined terminal classes. \\
+\req{FR-12} & Carry a canonical form, donor-language label and gloss on every token. \\
+\req{FR-13} & Recognise fixed multiword expressions as single tokens. \\
+\req{FR-14} & Never match a multiword expression across a punctuation or separator boundary. \\
+\req{FR-15} & Tolerate missing or added diacritics without losing attested homograph distinctions. \\
+\req{FR-16} & Emit unrecognised words as \texttt{UNKNOWN} tokens; never discard them. \\
+\req{FR-17} & Report raw, canonical and terminal-class token frequencies. \\
+\midrule
+\multicolumn{2}{@{}l@{}}{\textit{Syntactic analysis}}\\
+\req{FR-18} & Author the grammar as a CFG in natural form, left recursion included. \\
+\req{FR-19} & Eliminate left recursion mechanically. \\
+\req{FR-20} & Apply left factoring until no common prefixes remain. \\
+\req{FR-21} & Record every transformation with the rules it consumed and produced. \\
+\req{FR-22} & Compute FIRST and FOLLOW sets and construct an LL(1) parsing table. \\
+\req{FR-23} & Detect and report table conflicts rather than resolving them silently. \\
+\req{FR-24} & Read the token stream and return an explicit accept or reject verdict. \\
+\req{FR-25} & Return the derivation as an ordered list of production identifiers on acceptance. \\
+\req{FR-26} & Report the error position and the legal terminal set on rejection. \\
+\req{FR-27} & Offer deterministic repair suggestions for rejected input. \\
+\midrule
+\multicolumn{2}{@{}l@{}}{\textit{Presentation and access}}\\
+\req{FR-28} & Let visitors analyse a statement without authenticating; do not store such input. \\
+\req{FR-29} & Display the original grammar, ledger, transformed grammar, FIRST/FOLLOW and LL(1) table. \\
+\req{FR-30} & Search the lexicon incrementally, tolerant of missing accents. \\
+\req{FR-31} & Require authentication for corpus access and evidence export. \\
+\req{FR-32} & Detect conversation topics and cite the words that triggered each. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Non-functional requirements}
+
+\begin{center}
+\scriptsize
+\begin{tabular}{@{}l l p{9.6cm}@{}}
+\toprule
+\textbf{Id} & \textbf{Quality} & \textbf{Requirement} \\
+\midrule
+\req{NFR-1} & Determinism     & Identical input under identical grammar and lexicon versions always produces an identical result. No randomness, no model inference. \\
+\req{NFR-2} & Traceability    & Every reported claim cites its evidence: a rule id, statement id or source span. \\
+\req{NFR-3} & Correctness     & The parsing table is conflict-free, enforced by an automated test rather than asserted. \\
+\req{NFR-4} & Integrity       & Domain objects are immutable and reject unknown fields at construction. \\
+\req{NFR-5} & Security        & Session cookies are \texttt{HttpOnly} and \texttt{Secure}; state-changing requests require a CSRF token and a same-origin check. \\
+\req{NFR-6} & Accessibility   & The interface meets WCAG 2.1 AA, verified by automated scans on every view. \\
+\req{NFR-7} & Portability     & The service runs as a single container with no external database server. \\
+\req{NFR-8} & Reproducibility & Report figures and tables are generated from the running system, never transcribed. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Constraints and acceptance criteria}
+
+The analyzer accepts Cameroonian Francanglais only; the target is fixed in code and
+requests naming another variety are refused. The scanner, lexer and parser are written by
+hand --- using \texttt{lex}/\texttt{yacc} would hide precisely the transformations this
+coursework assesses. The parser is LL(1) by construction, so any rule that cannot be
+expressed within one token of lookahead must be reported as a limitation rather than
+worked around. Speakers are informed and consent obtained before identifiable
+conversation is retained.
+
+The system meets its requirements when: the corpus holds at least ten manually attested
+field statements, each attributable to a collector; the parsing table contains no
+conflicting cell; every collected statement receives an explicit verdict with a
+derivation or an expected-terminal set; and the automated suite passes.
+Section~\ref{c:verification} reports the measured outcome.

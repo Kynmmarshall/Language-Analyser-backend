@@ -1,0 +1,47 @@
+% =============================================================================
+%  Francanglais Studio -- CS4110 submission report (30-page limit variant)
+%
+%  Shares preamble.tex, cover.tex, generated/ and figures/ with main.tex, so
+%  data tables never diverge between the two documents. Only prose is separate.
+%
+%  Build:  latexmk -pdf main-compact.tex
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\input{preamble}
+\input{generated/facts}
+
+% Tighter than the full report: every page counts against the 30-page cap.
+\setcounter{tocdepth}{1}
+\setlength{\parskip}{0.38em}
+\captionsetup{skip=4pt}
+\titlespacing*{\section}{0pt}{1.1em}{0.5em}
+\titlespacing*{\subsection}{0pt}{0.8em}{0.35em}
+
+\begin{document}
+
+\input{cover}
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\begingroup
+\small
+\tableofcontents
+\endgroup
+\vspace{0.6em}
+
+\input{sections-compact/01-introduction}
+\input{sections-compact/02-requirements}
+\input{sections-compact/03-design}
+\input{sections-compact/04-data-collection}
+\input{sections-compact/05-lexical}
+\input{sections-compact/06-frequency}
+\input{sections-compact/07-syntax}
+\input{sections-compact/08-parser}
+\input{sections-compact/09-results}
+\input{sections-compact/10-screenshots}
+\input{sections-compact/11-complexity}
+\input{sections-compact/12-conclusion}
+
+\end{document}

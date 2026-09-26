@@ -9,3 +9,4 @@
 main.pdf
 
 latexmk-*.log
+main-compact.pdf

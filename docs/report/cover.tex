@@ -9,16 +9,13 @@
 \begin{tikzpicture}[remember picture, overlay]
   \fill[fcdeep] (current page.north west) rectangle
                 ([yshift=-16.6cm]current page.north east);
-  % Lighter band adds depth behind the title block.
-  \fill[fcaccent, opacity=0.5]
-        ([yshift=-12.9cm]current page.north west) rectangle
-        ([yshift=-16.6cm]current page.north east);
   \fill[fcgold] ([yshift=-16.6cm]current page.north west) rectangle
                 ([yshift=-16.84cm]current page.north east);
-  % Thin keyline echoing the logo's rounded square.
+  % Keyline frames the identity block only; it must end above the white rule so it
+  % never crosses the lines of text beneath.
   \draw[fcgold, line width=1pt, opacity=0.45, rounded corners=4pt]
         ([xshift=1.5cm, yshift=-1.4cm]current page.north west) rectangle
-        ([xshift=-1.5cm, yshift=-15.95cm]current page.north east);
+        ([xshift=-1.5cm, yshift=-12.6cm]current page.north east);
 \end{tikzpicture}
 
 \vspace*{0.45cm}

@@ -1,0 +1,118 @@
+\section{Syntactic Analysis}\label{c:syntax}
+
+\subsection{What the grammar has to describe}
+
+Real Yaound\'e speech does not arrive as tidy subject--verb--object sentences. The grammar
+must admit clauses juxtaposed without any conjunction; a fronted prepositional phrase
+before the subject; bare interjections and frozen formulas standing alone as complete
+utterances; serial verbs with no linking word; pre-verbal negation and adverbs interleaved
+inside the verb group; and subject dropping, leaving a bare predicate. All six occur in the
+collected data.
+
+\subsection{Original context-free grammar}
+
+The grammar is authored in its natural, human-readable form --- left recursion included ---
+and the transformations are applied by the tool (\req{FR-18}). Authoring it pre-factored
+would have hidden exactly the work this component is assessed on. \ProductionCount\
+productions over \TerminalCount\ terminals and \NonterminalCount\ nonterminals:
+
+\input{generated/grammar-original}
+
+\nonterm{Seq} $\rightarrow$ \nonterm{Seq} \term{CONJ} \nonterm{Unit} is the natural way to
+say ``a statement is a list of units joined by conjunctions or separators'', and three of
+its four alternatives recurse on the left. \nonterm{ClauseTail} $\rightarrow$ \nonterm{NP}
+\nonterm{Predicate} covers left-dislocated topics (\fw{le taximan, lui il sait}), which are
+common and would otherwise be rejected. \nonterm{VerbTail} is the serial-verb device: it
+lets verbs, adverbs and negations chain after the head verb without bounding the number of
+them.
+
+\subsection{Transformation ledger}
+
+Every transformation is recorded with the identifiers of the rules produced (\req{FR-21}).
+\LedgerSteps\ steps were required: one left-recursion elimination and three left factorings.
+
+\input{generated/ledger}
+
+\subsubsection*{Step 1 --- left-recursion elimination on \nonterm{Seq}}
+
+Applying the standard construction, the immediately left-recursive
+\nonterm{Seq} $\rightarrow$ \nonterm{Seq}$\,\alpha_i \mid \beta$ becomes:
+
+\begin{center}
+\small
+\begin{tabular}{@{}l@{\quad}l@{}}
+\nonterm{Seq}    & $\rightarrow$ \nonterm{Unit} \nonterm{Seq$'$} \\
+\nonterm{Seq$'$} & $\rightarrow$ \term{CONJ} \nonterm{Unit} \nonterm{Seq$'$}
+                   $\mid$ \term{SEP} \nonterm{Unit} \nonterm{Seq$'$}
+                   $\mid$ \term{SEP} \term{CONJ} \nonterm{Unit} \nonterm{Seq$'$}
+                   $\mid$ $\varepsilon$ \\
+\end{tabular}
+\end{center}
+
+\subsubsection*{Steps 2--4 --- left factoring}
+
+Elimination immediately \emph{creates} a new conflict: two \nonterm{Seq$'$} alternatives now
+begin with \term{SEP}, so a predictive parser cannot choose between them on one token of
+lookahead. That is factored into \nonterm{Seq$''$}. Two pre-existing conflicts are factored
+the same way.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lll@{\hskip 26pt}l@{}}
+\toprule
+\textbf{Nonterminal} & \textbf{Common prefix} & \textbf{Fresh} & \textbf{Result} \\
+\midrule
+\nonterm{Seq$'$} & \term{SEP}  & \nonterm{Seq$''$} & \nonterm{Seq$''$} $\rightarrow$ \nonterm{Unit} \nonterm{Seq$'$} $\mid$ \term{CONJ} \nonterm{Unit} \nonterm{Seq$'$} \\
+\nonterm{Unit}   & \term{INTJ} & \nonterm{Unit$'$} & \nonterm{Unit$'$} $\rightarrow$ \nonterm{Clause} $\mid$ $\varepsilon$ \\
+\nonterm{NP}     & \term{DET}  & \nonterm{NP$'$}   & \nonterm{NP$'$} $\rightarrow$ \term{NOUN} $\mid$ \term{ADJ} \term{NOUN} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\nonterm{NP} is the clearest illustration: \nonterm{NP} $\rightarrow$ \term{DET} \term{NOUN}
+and \nonterm{NP} $\rightarrow$ \term{DET} \term{ADJ} \term{NOUN} share \term{DET}, so the
+decision must be delayed until after the determiner is consumed.
+
+\begin{keypoint}[Order matters]
+Left factoring is applied \emph{after} left-recursion elimination, and repeatedly until no
+common prefixes remain. Running them in the other order would leave the \term{SEP} conflict
+that elimination introduces, and the grammar would not be LL(1).
+\end{keypoint}
+
+\subsection{Transformed grammar}
+
+The executable grammar, \ExecProductionCount\ productions after transformation:
+
+\input{generated/grammar-transformed}
+
+\subsection{FIRST and FOLLOW sets}
+
+FIRST and FOLLOW are computed by fixed-point iteration: repeatedly apply the standard
+closure rules until no set changes. Nullable nonterminals are those whose FIRST derivation
+reaches $\varepsilon$; here they are \nonterm{ClauseOpt}, \nonterm{ClauseTail},
+\nonterm{Comps}, \nonterm{NegOpt}, \nonterm{Seq$'$}, \nonterm{Unit$'$} and
+\nonterm{VerbTail}.
+
+\input{generated/first-follow}
+
+\subsection{LL(1) parsing table}
+
+The table is built by the standard rule: for each production $A \rightarrow \alpha$, add it
+at $[A, t]$ for every $t \in \mathrm{FIRST}(\alpha)$; and if $\alpha$ is nullable, also for
+every $t \in \mathrm{FOLLOW}(A)$. A second production landing in an occupied cell is a
+conflict.
+
+\begin{keypoint}[Result: conflict-free]
+The constructed table contains \textbf{no duplicated cells}. The grammar is LL(1): the
+parser needs exactly one token of lookahead, with no backtracking and no ambiguity
+resolution heuristics. \texttt{tests/test\_ll1.py} asserts this property, so a future
+grammar edit that introduces a conflict fails the test suite rather than degrading silently
+(\req{NFR-3}).
+\end{keypoint}
+
+Rows are nonterminals, columns are terminals plus the end marker \term{\$}, and each cell
+holds the production to apply. Blank cells are exactly where a syntax error is detected.
+
+\begin{landscape}
+\input{generated/ll1-table}
+\end{landscape}

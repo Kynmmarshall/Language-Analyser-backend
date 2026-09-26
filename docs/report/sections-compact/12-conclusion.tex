@@ -1,0 +1,64 @@
+\section{Conclusion}\label{c:conclusion}
+
+\subsection{What was achieved}
+
+The project delivers a complete, working compiler front end for a language with no standard
+written form: a corpus of \CorpusTotal\ statements heard in Yaound\'e, transcribed by hand,
+cross-checked and attributed across all three members with the attestation enforced in
+software; a hand-written scanner and lexer over five documented regular expressions,
+resolving \LexiconTotal\ lexicon entries across \OriginCount\ donor languages into
+\TerminalCount\ terminal classes with multiword recognition, accent folding and homograph
+protection; a \ProductionCount-production context-free grammar authored in natural
+left-recursive form and mechanically transformed in \LedgerSteps\ recorded steps into an
+\ExecProductionCount-production LL(1) grammar; FIRST and FOLLOW sets and a parsing table
+verified conflict-free by an automated test; and a table-driven predictive parser accepting
+\CorpusAccepted\ of \CorpusTotal\ collected statements, returning an explicit derivation on
+acceptance and an expected-terminal set plus concrete repair suggestions on rejection.
+
+\subsection{What we learned}
+
+The most useful lesson was that the transformations taught in the course are not
+bookkeeping. Eliminating left recursion on \nonterm{Seq} \emph{created} a new common prefix
+on \term{SEP} that had to be factored out afterwards --- the two techniques interact, and the
+order in which they are applied decides whether the result is LL(1). Seeing that happen on
+our own grammar, in the ledger the tool recorded, taught more than the worked examples did.
+
+The second lesson concerns honesty in tooling. It was tempting, each time a statement was
+rejected, to add a production until it passed. We resisted, and the two remaining rejections
+in Section~\ref{c:results} are documented with the specific LL(1) conflict that prevents a
+fix. A grammar that accepts everything distinguishes nothing.
+
+The third was methodological: generating every table in this document from the running
+system, rather than transcribing results by hand, caught several places where earlier
+documentation had drifted away from the code it claimed to describe.
+
+\subsection{Limitations and future work}
+
+Two constructions --- post-object adverbs and post-verbal clitics --- lie outside the LL(1)
+grammar, for the reasons given in Section~\ref{c:results}. The lexicon's dictionary tier
+(\LexiconDictionary\ of \LexiconTotal\ entries) is reference-derived rather than
+corpus-attested, and is labelled as such. Analysis is purely syntactic: the analyzer
+recognises structure, it does not interpret meaning.
+
+Splitting \term{PRON} into full pronouns and clitics would remove both documented rejections
+at the cost of re-annotating the pronoun entries against fresh evidence. Beyond that, the
+natural next step is a semantic layer: the lexicon already carries glosses and donor
+languages, so a gloss-composition pass over the parse tree would turn the analyzer from a
+recogniser into a translator. A larger corpus would also let the topic matcher be evaluated
+for precision and recall rather than merely cited for evidence.
+
+\subsection{Reproducing this report}
+
+No figure or table here was transcribed by hand. From \texttt{docs/report}:
+
+\begin{lstlisting}[language=bash, numbers=none]
+python tools/export_tables.py       # regenerate generated/*.tex from the analyzer
+python tools/render_diagrams.py     # regenerate figures/*.png from diagrams/*.puml
+latexmk -pdf main-compact.tex       # build this document
+\end{lstlisting}
+
+Screenshots are captured separately from the front-end repository with
+\texttt{node scripts/\allowbreak capture-report-\allowbreak screenshots.mjs}. Source code
+accompanying this report comprises the lexical analyzer (\texttt{core/text.py},
+\texttt{core/lexer.py}), the parser (\texttt{core/ll1.py}, \texttt{core/parser.py}) and 158
+tests in \texttt{tests/} drawn from the collected data.

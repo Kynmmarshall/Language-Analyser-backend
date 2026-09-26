@@ -1,26 +1,44 @@
 # CS4110 Final Report
 
-LaTeX sources for the Francanglais Studio report — a combined **Software Requirements
-Specification** and **Software Design Document** covering the compiler-construction
-coursework.
+Two PDFs are built from one source tree. They share `preamble.tex`, `cover.tex`,
+`generated/` and `figures/`, so **data tables can never diverge between them** — only the
+prose files differ.
+
+| Document | Pages | Purpose |
+| --- | --- | --- |
+| `main-compact.pdf` | **30** | **Submit this.** Meets the brief's "should not exceed 30 pages". |
+| `main.pdf` | 53 | Full reference: same content plus expanded SRS/SDD and four appendices. |
+
+```powershell
+pwsh ./build.ps1        # exports tables, renders diagrams, builds BOTH PDFs
+```
 
 ## Structure
 
-| Part | Sections | Content |
-| --- | --- | --- |
-| I | 1 | Context, objective, scope, team |
-| II | 2 | SRS — actors, FR/NFR tables, constraints, acceptance criteria |
-| III | 3 | SDD — architecture, modules, data/interface/security design |
-| IV | 4–8 | Data collection, lexical analysis, frequencies, grammar, parser |
-| V | 9–11 | Results, linguistic discussion, conclusion |
-| App. | A–D | Grammar reference, lexicon, screenshots, reproduction |
+`main-compact.tex` → `sections-compact/` (12 sections, no appendices):
 
-**Page budget.** The exam brief caps the report at 30 pages. The numbered body is kept at
-≤ 31 pages; appendices carry the bulk evidence. Check after any edit:
+| § | Content | Covers |
+| --- | --- | --- |
+| 1 | Introduction, team + matricules | — |
+| 2 | Requirements (actors, use-case diagram, FR/NFR) | — |
+| 3 | System design (architecture, pipeline, sequence, data, security) | — |
+| 4 | Data collection | Component 1 |
+| 5 | Lexical analysis, regexes, token categories | Component 2.1–2.2 |
+| 6 | Token frequency and variation | Component 2.3 |
+| 7 | Grammar, left recursion, left factoring, FIRST/FOLLOW, LL(1) table | Component 3.1–3.2 |
+| 8 | Parser, worked trace, error reporting | Component 4 |
+| 9 | Raw statements + accept/reject verdicts, verification | Component 3.3–3.4 |
+| 10 | Screenshots of the working analyzer | Deliverable A.vi |
+| 11 | Why Yaoundé communication is linguistically complex | Deliverable A.vii |
+| 12 | Conclusion, limitations, reproduction | — |
+
+`main.tex` → `sections/` (Parts I–V + Appendices A–D).
+
+**Page budget.** `main-compact.pdf` is at exactly 30 physical pages (cover + 29 numbered).
+Re-check after any edit:
 
 ```powershell
-Select-String main.log -Pattern 'Output written'
-Get-Content main.toc | Select-String 'section.A.'   # where the appendices start
+Select-String main-compact.log -Pattern 'Output written'
 ```
 
 ## Build
@@ -88,10 +106,11 @@ as a visible "Screenshot pending" placeholder rather than breaking the build.
 
 | Path | Contents |
 | --- | --- |
-| `main.tex` | Document root: front matter, part banners, section includes |
-| `cover.tex` | Title page. The TikZ field height must clear all white text above the gold rule |
+| `main.tex` / `main-compact.tex` | The two document roots |
+| `cover.tex` | Shared title page. The TikZ field height must clear all white text above the gold rule, and the keyline must end above it |
 | `preamble.tex` | Packages, palette (mirrors `src/styles/theme.css`), callout boxes, helpers |
-| `sections/` | Hand-written prose, one file per report section |
+| `sections/` | Prose for the full report |
+| `sections-compact/` | Prose for the 30-page submission |
 | `generated/` | **Auto-generated** tables and fact macros — do not edit |
 | `diagrams/` | PlantUML sources |
 | `figures/` | Rendered diagrams, screenshots and the app logo |
@@ -107,9 +126,11 @@ as a visible "Screenshot pending" placeholder rather than breaking the build.
 
 - Numbers in prose come from macros defined in `generated/facts.tex`
   (`\LexiconTotal`, `\CorpusAccepted`, `\LedgerSteps`, …). Use the macro, never a literal,
-  so the report cannot drift from the code.
-- Requirement ids use `\req{FR-1}` and are referenced from the SDD and the verification
-  table in §9.3. Adding a requirement means updating both.
+  so the reports cannot drift from the code.
+- Prose changes affecting both documents must be made in `sections/` **and**
+  `sections-compact/`. Data tables are shared, so those never need duplicating.
+- Requirement ids use `\req{FR-1}` and are referenced from the design section and the
+  verification table. Adding a requirement means updating both.
 - Callout boxes: `keypoint` (green), `limitbox` (amber, honest limitations),
   `todobox` (red, outstanding team actions).
 - Inline helpers: `\term{DET}` for terminals, `\nonterm{Clause}` for nonterminals,

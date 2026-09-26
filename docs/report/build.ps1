@@ -37,13 +37,16 @@ if (-not $SkipDiagrams) {
     if ($LASTEXITCODE -ne 0) { throw 'render_diagrams.py failed' }
 }
 
-Write-Host '==> Compiling main.tex' -ForegroundColor Cyan
-& latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
-if ($LASTEXITCODE -ne 0) { throw 'latexmk failed' }
-
-$pdf = Join-Path $PSScriptRoot 'main.pdf'
-$pages = (Select-String -Path 'main.log' -Pattern 'Output written on .*\((\d+) pages' |
-          Select-Object -Last 1).Matches.Groups[1].Value
+foreach ($doc in @('main', 'main-compact')) {
+    Write-Host "==> Compiling $doc.tex" -ForegroundColor Cyan
+    & latexmk -pdf -interaction=nonstopmode -halt-on-error "$doc.tex"
+    if ($LASTEXITCODE -ne 0) { throw "latexmk failed on $doc.tex" }
+}
 
 Write-Host ''
-Write-Host "Built $pdf ($pages pages)" -ForegroundColor Green
+foreach ($doc in @('main', 'main-compact')) {
+    $pages = (Select-String -Path "$doc.log" -Pattern 'Output written on .*\((\d+) pages' |
+              Select-Object -Last 1).Matches.Groups[1].Value
+    $label = if ($doc -eq 'main') { 'full reference' } else { 'submission, 30-page cap' }
+    Write-Host ("Built {0}.pdf  {1,3} pages  ({2})" -f $doc, $pages, $label) -ForegroundColor Green
+}
