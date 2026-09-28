@@ -47,6 +47,17 @@ def canonicalize_word(word: str) -> str:
     return unicodedata.normalize("NFC", word).casefold()
 
 
+def fold_word(word: str) -> str:
+    """A diacritic-insensitive lookup key, so 'reseau' can still find 'réseau'.
+
+    Only ever used as a fallback after an exact canonical lookup misses, because folding
+    merges genuine minimal pairs such as 'à'/'a' and 'mais'/'maïs'.
+    """
+    decomposed = unicodedata.normalize("NFD", word)
+    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return unicodedata.normalize("NFC", stripped).casefold()
+
+
 def scan_spans(text: str) -> tuple[RawSpan, ...]:
     """Split text into maximal WORD/NUMBER/SPACE/NEWLINE/PUNCTUATION/OTHER spans.
 

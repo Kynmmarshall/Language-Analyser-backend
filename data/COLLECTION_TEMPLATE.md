@@ -41,11 +41,14 @@ Reviewer fields are still planned; keep review notes separately for now.
    does not independently prove authenticity; observation and peer review are required.
 4. **`topics`** is a list drawn from: `commuting`, `internet`, `electricity`,
    `market_bargaining`, `rain`, `fuel`, `roadside_business`, `bendskin`,
-   `security`, `university`. A statement may have more than one topic.
+   `security`, `university`, `food_and_drink`, `family`, `greetings`,
+   `nightlife`, `housing`. A statement may have more than one topic.
 5. **`collector_id`** is the name/initials of whoever transcribed it, for
-   accountability.
-6. Each `statement_id` must be unique within the batch (e.g. `field-001`,
-   `field-002`, ...).
+   accountability. When a statement is added through the app this is taken from
+   the signed-in account and cannot be set by hand.
+6. `statement_id` must be unique. The app assigns the next free
+   `field-NNN` automatically on save; set it yourself only when preparing a
+   JSON batch for direct import.
 
 ## Record Template
 

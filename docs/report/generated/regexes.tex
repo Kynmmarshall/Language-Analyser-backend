@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\caption{Regular expressions driving the scanner, exported from \texttt{core/text.py}.}
+\label{tab:regex}
+\begin{tabular}{@{}l p{0.40\linewidth} p{0.32\linewidth}@{}}
+\toprule
+\textbf{Span kind} & \textbf{Regular expression} & \textbf{Matches} \\
+\midrule
+\texttt{WORD} & \ttfamily\scriptsize (\allowbreak{}?\allowbreak{}:\allowbreak{}[\allowbreak{}\textasciicircum{}\allowbreak{}\textbackslash{}\allowbreak{}W\allowbreak{}\textbackslash{}\allowbreak{}d\allowbreak{}\_\allowbreak{}]\allowbreak{}|\allowbreak{}[\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}0\allowbreak{}3\allowbreak{}0\allowbreak{}0\allowbreak{}-\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}0\allowbreak{}3\allowbreak{}6\allowbreak{}f\allowbreak{}]\allowbreak{})\allowbreak{}+\allowbreak{}(\allowbreak{}?\allowbreak{}:\allowbreak{}[\allowbreak{}'\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}2\allowbreak{}0\allowbreak{}1\allowbreak{}9\allowbreak{}-\allowbreak{}]\allowbreak{}(\allowbreak{}?\allowbreak{}:\allowbreak{}[\allowbreak{}\textasciicircum{}\allowbreak{}\textbackslash{}\allowbreak{}W\allowbreak{}\textbackslash{}\allowbreak{}d\allowbreak{}\_\allowbreak{}]\allowbreak{}|\allowbreak{}[\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}0\allowbreak{}3\allowbreak{}0\allowbreak{}0\allowbreak{}-\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}0\allowbreak{}3\allowbreak{}6\allowbreak{}f\allowbreak{}]\allowbreak{})\allowbreak{}+\allowbreak{})\allowbreak{}* & Letters and combining accents, with internal apostrophes or hyphens \\
+\addlinespace
+\texttt{NUMBER} & \ttfamily\scriptsize \textbackslash{}\allowbreak{}d\allowbreak{}+ & A run of digits \\
+\addlinespace
+\texttt{SPACE} & \ttfamily\scriptsize [\allowbreak{}\textasciicircum{}\allowbreak{}\textbackslash{}\allowbreak{}S\allowbreak{}\textbackslash{}\allowbreak{}r\allowbreak{}\textbackslash{}\allowbreak{}n\allowbreak{}]\allowbreak{}+ & Horizontal whitespace only \\
+\addlinespace
+\texttt{NEWLINE} & \ttfamily\scriptsize [\allowbreak{}\textbackslash{}\allowbreak{}r\allowbreak{}\textbackslash{}\allowbreak{}n\allowbreak{}]\allowbreak{}+ & One or more line breaks \\
+\addlinespace
+\texttt{PUNCTUATION} & \ttfamily\scriptsize [\allowbreak{}.\allowbreak{},\allowbreak{}!\allowbreak{}?\allowbreak{};\allowbreak{}:\allowbreak{}\textbackslash{}\allowbreak{}"\allowbreak{}(\allowbreak{})\allowbreak{}«\allowbreak{}»\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}2\allowbreak{}0\allowbreak{}1\allowbreak{}8\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}2\allowbreak{}0\allowbreak{}1\allowbreak{}9\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}2\allowbreak{}0\allowbreak{}1\allowbreak{}c\allowbreak{}\textbackslash{}\allowbreak{}u\allowbreak{}2\allowbreak{}0\allowbreak{}1\allowbreak{}d\allowbreak{}…\allowbreak{}]\allowbreak{}+ & Sentence and clause marks, including guillemets \\
+\addlinespace
+\bottomrule
+\end{tabular}
+\end{table}

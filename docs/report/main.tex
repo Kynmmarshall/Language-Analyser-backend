@@ -1,0 +1,65 @@
+% =============================================================================
+%  Francanglais Studio -- CS4110 Compiler Construction final report
+%  Combined Software Requirements Specification and Software Design Document
+%  The ICT University, Summer 2026
+%
+%  Build:  pwsh ./build.ps1        (tables -> diagrams -> latexmk)
+%  or:     latexmk -pdf main.tex
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\input{preamble}
+\input{generated/facts}   % counts exported from the live analyzer
+
+\begin{document}
+
+\input{cover}
+
+% ------------------------------------------------------------- front matter
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\input{sections/00-abstract}
+\clearpage
+
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ============================ PART I ========================================
+\parttitle{Part I}{Overview}
+\input{sections/01-introduction}
+
+% ============================ PART II =======================================
+\parttitle{Part II}{Software Requirements Specification}
+\input{sections/02-srs}
+
+% ============================ PART III ======================================
+\parttitle{Part III}{Software Design Document}
+\input{sections/03-sdd}
+
+% ============================ PART IV =======================================
+\parttitle{Part IV}{Compiler Construction}
+\input{sections/04-data-collection}
+\input{sections/05-lexical-analysis}
+\input{sections/06-token-statistics}
+\input{sections/07-syntactic-analysis}
+\input{sections/08-parser-implementation}
+
+% ============================ PART V ========================================
+\parttitle{Part V}{Evaluation and Discussion}
+\input{sections/09-results}
+\input{sections/10-complexity}
+\input{sections/11-conclusion}
+
+% ============================ APPENDICES ====================================
+\appendix
+\parttitle{Appendices}{Supporting Evidence}
+\input{sections/A1-grammar-listings}
+\input{sections/A2-lexicon}
+\input{sections/A3-screenshots}
+\input{sections/A4-reproduction}
+
+\end{document}

@@ -18,6 +18,13 @@ class Settings:
     session_lifetime_seconds: int
     max_anonymous_text_characters: int
     cors_origins: tuple[str, ...] = ("http://127.0.0.1:5175", "http://localhost:5175")
+    # Self-service signup is OFF unless a code is configured: the corpus holds field data
+    # and collector identities, so an open endpoint would expose it to anyone.
+    signup_code: str | None = None
+
+    @property
+    def signup_enabled(self) -> bool:
+        return bool(self.signup_code)
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -28,10 +35,12 @@ class Settings:
             ).split(",")
             if origin.strip()
         )
+        signup_code = os.environ.get("YAOUNDE_SIGNUP_CODE", "").strip()
         return cls(
             database_url=os.environ.get("YAOUNDE_DATABASE_URL", "sqlite:///./data/app.db"),
             cookie_secure=os.environ.get("YAOUNDE_ENV", "development") == "production",
             session_lifetime_seconds=int(os.environ.get("YAOUNDE_SESSION_SECONDS", 8 * 3600)),
             max_anonymous_text_characters=int(os.environ.get("YAOUNDE_MAX_TEXT_CHARS", 2000)),
             cors_origins=cors_origins,
+            signup_code=signup_code or None,
         )

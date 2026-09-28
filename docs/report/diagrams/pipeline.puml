@@ -1,0 +1,39 @@
+@startuml
+skinparam dpi 160
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam ArrowColor #1F3864
+skinparam rectangle {
+  BorderColor #1F3864
+  BackgroundColor #EEF2FA
+  FontColor #14213D
+}
+skinparam note {
+  BorderColor #C55A11
+  BackgroundColor #FDF2E9
+}
+
+left to right direction
+
+rectangle "Raw text\n«Le taximan waka.»" as raw
+rectangle "Stage 1\nSpan scanning\ntext.py" as scan
+rectangle "Stage 2\nLexical analysis\nlexer.py + lexicon.py" as lex
+rectangle "Stage 3\nGrammar preparation\ngrammar.py" as prep
+rectangle "Stage 4\nFIRST / FOLLOW / table\nll1.py" as tbl
+rectangle "Stage 5\nLL(1) parsing\nparser.py" as parse
+rectangle "AnalysisResult\ntokens + verdict\n+ topics + hints" as out
+
+raw --> scan
+scan --> lex : spans
+lex --> parse : token stream
+prep --> tbl
+tbl --> parse : LL(1) table
+parse --> out
+
+note bottom of prep
+  Stages 3 and 4 run **once** at
+  start-up, not per statement.
+end note
+
+@enduml

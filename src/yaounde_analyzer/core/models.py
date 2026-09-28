@@ -42,6 +42,16 @@ class LanguageLabel(StrEnum):
     PIDGIN = "pidgin"
     FULFULDE = "fulfulde"
     EWONDO = "ewondo"
+    DUALA = "duala"
+    BASSA = "bassa"
+    BAMILEKE = "bamileke"
+    BETI = "beti"
+    BULU = "bulu"
+    YEMBA = "yemba"
+    HAUSA = "hausa"
+    LINGALA = "lingala"
+    GERMAN = "german"
+    SPANISH = "spanish"
     MIXED = "mixed"
     UNCERTAIN = "uncertain"
 
@@ -60,6 +70,7 @@ class Token(BaseModel):
     is_multiword: bool = False
     component_spans: tuple[SourceSpan, ...] = ()
     rule_id: str
+    description: str = ""
     span: SourceSpan
 
     @model_validator(mode="after")

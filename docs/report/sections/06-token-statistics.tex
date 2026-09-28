@@ -1,0 +1,33 @@
+\section{Token Frequency and Variation}\label{sec:frequency}
+
+Three frequency views are produced for every analysis, and they answer different
+questions (\req{FR-17}).
+
+\subsection{Raw versus canonical forms}
+
+The left table is what people actually said or typed --- accents, casing and spelling
+variants included. The right table collapses casing and Unicode normalisation differences.
+Reading them side by side measures orthographic variation directly: a canonical form
+reached by several distinct surface spellings is a documented variant cluster.
+
+\begin{center}
+\begin{minipage}[t]{0.47\linewidth}
+\centering\input{generated/freq-raw}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\centering\input{generated/freq-canonical}
+\end{minipage}
+\end{center}
+
+\subsection{Terminal classes}
+
+The grammatical shape of the data, which is what predicts whether a grammar will parse it.
+
+\begin{center}\input{generated/freq-terminal}\end{center}
+
+\begin{keypoint}[What the variation tells us]
+Variation in this data is not noise to be normalised away. The gap between the raw and
+canonical tables is a measurement of how unstable written Francanglais orthography is,
+and it is precisely the reason the lexer needs a folded fallback tier rather than a single
+exact-match dictionary.
+\end{keypoint}

@@ -1,0 +1,39 @@
+\section{Lexicon Reference}\label{app:lexicon}
+
+\subsection{Composition}
+
+The lexicon contains \LexiconTotal\ entries in two tiers, and the distinction is
+load-bearing:
+
+\begin{description}[leftmargin=1.4em, style=nextline, font=\ttfamily]
+  \item[corpus (\LexiconCorpus\ entries)] Each one cites the statement identifiers in which
+    it was observed. \texttt{LexiconSpec} validation \emph{rejects} a corpus entry with an
+    empty evidence list, so this tier cannot be padded.
+  \item[dictionary (\LexiconDictionary\ entries)] Closed-class French and Francanglais
+    vocabulary sourced from reference material --- determiners, pronouns, prepositions,
+    conjunctions and common verb forms. These carry no corpus evidence and make no claim of
+    attestation.
+\end{description}
+
+\begin{limitbox}[A claim we will not make]
+Earlier design documentation for this project stated that every lexicon entry existed only
+because it was attested in a reviewed Yaound\'e statement. That is not true of the current
+lexicon and it is corrected here: the majority of entries are dictionary-derived. The two
+tiers are kept separately labelled precisely so that the distinction survives into any
+report generated from the data.
+\end{limitbox}
+
+\subsection{Corpus-attested entries}
+
+The table below lists the corpus tier in full, with the statement identifiers that justify
+each entry. The dictionary tier is omitted for length and is browsable in the application's
+grammar view, which supports incremental search.
+
+\input{generated/lexicon-corpus}
+
+\subsection{Duplicate prevention}
+
+Canonical forms are unique across the whole lexicon, enforced at specification load time.
+This caught two genuine collisions during development, where the same slang term was added
+independently in two different vocabulary batches --- the kind of error that would otherwise
+have produced a silently shadowed entry and an unexplainable parse result.

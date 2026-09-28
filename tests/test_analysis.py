@@ -1,18 +1,14 @@
 """Integration tests wiring the lexer, demo grammar/lexicon, parser, and topic/frequency
 analysis together.
 
-The demo grammar intentionally covers only a small NP/VP/PP clause shape derived from
-real corpus vocabulary. None of the 12 full demo.json statements are expected to be fully
-accepted end to end (they contain far more structure than this small grammar covers) — the
-short sentences below are separately constructed teaching examples, built from the same
-real vocabulary, used to demonstrate that the pipeline genuinely accepts and rejects
-correctly rather than always rejecting.
+The demo grammar intentionally covers only a small NP/VP/PP clause shape plus bare
+interjections and fixed formulas. Longer demo statements carry far more structure than
+it covers and are expected to be rejected; the short sentences below are separately
+constructed teaching examples, built from the same real vocabulary, used to demonstrate
+that the pipeline genuinely accepts and rejects correctly rather than always rejecting.
 """
 
 from __future__ import annotations
-
-import json
-from pathlib import Path
 
 from yaounde_analyzer.core.analysis import (
     PreparedAnalyzer,
@@ -24,9 +20,12 @@ from yaounde_analyzer.core.analysis import (
 from yaounde_analyzer.core.corpus import validate_import
 from yaounde_analyzer.core.lexer import tokenize
 from yaounde_analyzer.core.models import RejectionReason
-from yaounde_analyzer.core.specs import load_demo_grammar, load_demo_lexicon
+from yaounde_analyzer.core.specs import (
+    load_demo_corpus_records,
+    load_demo_grammar,
+    load_demo_lexicon,
+)
 
-DEMO_CORPUS_PATH = Path(__file__).resolve().parent.parent / "data" / "demo.json"
 LEXICON = load_demo_lexicon()
 GRAMMAR = load_demo_grammar()
 ANALYZER = PreparedAnalyzer(LEXICON, GRAMMAR)
@@ -57,8 +56,14 @@ def test_a_bare_verb_sentence_is_accepted() -> None:
     assert parse.accepted
 
 
-def test_verb_first_order_is_rejected_as_unsupported_syntax() -> None:
-    _, parse, _ = analyze_tokens_and_parse("Va combi.", ANALYZER)
+def test_verb_first_imperative_is_accepted() -> None:
+    _, parse, _ = analyze_tokens_and_parse("Va au kwatt.", ANALYZER)
+    assert parse.accepted
+
+
+def test_word_salad_is_still_rejected() -> None:
+    # Wider clause coverage must not turn the grammar into one that accepts anything.
+    _, parse, _ = analyze_tokens_and_parse("Le le le.", ANALYZER)
     assert not parse.accepted
     assert parse.rejection_reason == RejectionReason.SYNTAX_NO_TABLE_ENTRY
 
@@ -78,7 +83,7 @@ def test_topic_match_shows_its_exact_evidence() -> None:
 
 
 def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> None:
-    records = json.loads(DEMO_CORPUS_PATH.read_text(encoding="utf-8"))
+    records = load_demo_corpus_records()
     revisions = validate_import(records)
     results = analyze_corpus(revisions, ANALYZER)
     assert len(results) == len(records)
@@ -94,19 +99,22 @@ def test_full_demo_corpus_analyzes_without_errors_and_recalls_hand_labels() -> N
         # but must never miss a topic a human reviewer already confirmed.
         assert hand_labels <= detected, (record["statement_id"], hand_labels, detected)
 
-    # This small demo grammar is not expected to fully accept any real, full statement —
-    # only the short constructed sentences above exercise a successful ACCEPT.
-    assert all(not result.parse.accepted for result in results)
+    # Two constructions stay out of reach of an LL(1) table: an adverb after an object
+    # ('le poisson ici') is indistinguishable from one inside the verb group, and a
+    # post-verbal clitic ('va me bring') from an object pronoun. Both are left rejected
+    # rather than papered over with an ambiguous rule.
+    rejected = {r.statement_revision_id.split("@")[0] for r in results if not r.parse.accepted}
+    assert rejected == {"ycf-007", "ycf-008"}
 
 
 def test_corpus_statistics_reports_full_lexical_coverage() -> None:
-    records = json.loads(DEMO_CORPUS_PATH.read_text(encoding="utf-8"))
+    records = load_demo_corpus_records()
     revisions = validate_import(records)
     results = analyze_corpus(revisions, ANALYZER)
     stats = compute_statistics(results)
 
-    assert stats.statement_count == 12
+    assert stats.statement_count == len(records)
     assert stats.unknown_words == ()
-    assert stats.rejected_count == 12
-    assert stats.canonical_frequency["kwatt"] == 4  # demo-001, 003, 008, 009
-    assert stats.raw_frequency["Combi"] == 3  # capitalized in demo-001, 002, 007
+    assert stats.accepted_count + stats.rejected_count == stats.statement_count
+    assert stats.canonical_frequency["kwatt"] == 5  # ycf-001, 003, 008, 009, 015
+    assert stats.raw_frequency["Combi"] == 3  # capitalized in ycf-001, 002, 007

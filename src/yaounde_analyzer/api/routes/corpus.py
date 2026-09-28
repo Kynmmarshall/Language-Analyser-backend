@@ -13,7 +13,9 @@ from yaounde_analyzer.api.repository import (
     add_statement_revision,
     create_statement,
     get_statement_record,
+    latest_collector_id,
     list_statement_records,
+    next_statement_id,
     publish_revision,
     topics_from_json,
     unpublish,
@@ -89,20 +91,47 @@ def create_corpus_statement(
     session: Session = Depends(get_db),
     user: User = Depends(require_csrf),
 ) -> StatementPrivate:
-    try:
-        create_statement(
-            session,
-            statement_id=payload.statement_id,
-            source_kind=payload.source_kind,
-            raw_text=payload.raw_text,
-            manual_transcription_attested=payload.manual_transcription_attested,
-            collector_id=payload.collector_id,
-            topics=payload.topics,
-            created_by_user_id=user.id,
+    # The collector is always the authenticated account: a client-supplied value must
+    # never let one collector attribute a statement to another.
+    collector_id = user.username
+
+    if payload.statement_id is not None:
+        statement_id = payload.statement_id
+        attempts = [statement_id]
+    else:
+        # Retry a couple of times so two collectors saving at once cannot deadlock on
+        # the same generated id.
+        attempts = []
+
+    created = False
+    last_error: DuplicateStatementError | None = None
+    for attempt in range(3):
+        statement_id = attempts[attempt] if attempt < len(attempts) else next_statement_id(
+            session, payload.source_kind
         )
-    except DuplicateStatementError as error:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(error)) from error
-    record = get_statement_record(session, payload.statement_id)
+        try:
+            create_statement(
+                session,
+                statement_id=statement_id,
+                source_kind=payload.source_kind,
+                raw_text=payload.raw_text,
+                manual_transcription_attested=payload.manual_transcription_attested,
+                collector_id=collector_id,
+                topics=payload.topics,
+                created_by_user_id=user.id,
+            )
+            created = True
+            break
+        except DuplicateStatementError as error:
+            last_error = error
+            if payload.statement_id is not None:
+                break
+
+    if not created:
+        assert last_error is not None
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(last_error)) from last_error
+
+    record = get_statement_record(session, statement_id)
     assert record is not None
     return _to_private(record)
 
@@ -134,6 +163,12 @@ def update_corpus_statement(
     session: Session = Depends(get_db),
     user: User = Depends(require_csrf),
 ) -> StatementPrivate:
+    # Read as a scalar, not an ORM record: holding the record across the write below
+    # would hand back a stale revisions collection afterwards.
+    previous_collector = latest_collector_id(session, statement_id)
+    if previous_collector is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Statement not found")
+
     try:
         add_statement_revision(
             session,
@@ -142,7 +177,7 @@ def update_corpus_statement(
             raw_text=payload.raw_text,
             source_kind=payload.source_kind,
             manual_transcription_attested=payload.manual_transcription_attested,
-            collector_id=payload.collector_id,
+            collector_id=payload.collector_id or previous_collector,
             topics=payload.topics,
             created_by_user_id=user.id,
         )

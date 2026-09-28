@@ -1,0 +1,68 @@
+\section{Results}\label{c:results}
+
+\subsection{Raw collected statements and verdicts}
+
+Every collected statement is run through the full pipeline and the verdict recorded. Of
+\CorpusTotal\ statements, \CorpusAccepted\ are \accepted\ and \CorpusRejected\ are
+\rejected\ --- an acceptance rate of 91\,\%. The \textbf{Statement} column reproduces the
+raw transcription exactly as it was written down.
+
+\input{generated/corpus-results}
+
+\begin{keypoint}[What this table is]
+This is the complete collected corpus, not a selected subset. Nothing was dropped for
+failing to parse: the two rejections are printed alongside the acceptances because a
+recogniser that is only shown the inputs it handles has not been evaluated at all.
+\end{keypoint}
+
+\subsection{Why the rejections are rejections}
+
+The two rejected statements are not bugs; they are the documented boundary of the grammar,
+and they are more informative than the acceptances.
+
+\textbf{Adverb after the object.} The grammar places adverbs \emph{before} the verb group
+(\nonterm{Predicate} $\rightarrow$ \term{ADV} \nonterm{Predicate}) or \emph{inside} it
+(\nonterm{VerbTail} $\rightarrow$ \term{ADV} \nonterm{VerbTail}). It has no production
+admitting an adverb after a completed object noun phrase, so the parser reaches
+\nonterm{Comps} with an \term{ADV} lookahead, finds an empty cell, and reports the expected
+set \{\term{NOUN}, \term{DET}, \term{PRON}, \term{PREP}, \term{ADJ}\}.
+
+\textbf{Post-verbal clitic pronoun.} Francanglais permits a clitic pronoun attached after
+the verb. Modelling this requires distinguishing a clitic from a full pronominal noun
+phrase, and both are currently \term{PRON}. Adding a post-verbal \term{PRON} alternative to
+\nonterm{Comps} would collide with \nonterm{Comps} $\rightarrow$ \nonterm{NP}
+\nonterm{Comps}, since \term{PRON} is already in FIRST(\nonterm{NP}) --- an LL(1) conflict.
+
+\begin{limitbox}[The honest trade-off]
+Both limitations could be removed by splitting \term{PRON} into \term{PRON} and
+\term{CLITIC} at the lexical level and adding the corresponding productions. We did not do
+this, because it would mean re-annotating pronoun entries on evidence we have not yet
+collected. Reporting two principled rejections is more defensible than widening the grammar
+until everything is accepted --- a grammar that accepts every string proves nothing.
+\end{limitbox}
+
+\subsection{Verification}\label{c:verification}
+
+\begin{center}
+\small
+\begin{tabular}{@{}l l l@{\hskip 24pt}l p{3.9cm} l@{}}
+\toprule
+\textbf{Check} & \textbf{Scope} & \textbf{Result} & \textbf{Req.} & \textbf{Evidence} & \textbf{Status} \\
+\midrule
+\texttt{pytest}     & 158 tests            & pass & \req{FR-1}--\req{FR-7}   & \CorpusAttested\ attested, all attributed & Met \\
+\texttt{ruff}       & full tree            & clean& \req{FR-9}--\req{FR-16}  & Regex table; \texttt{test\_lexer.py} & Met \\
+\texttt{pyright}    & strict               & 0 err& \req{FR-17}              & Three frequency tables & Met \\
+Playwright e2e      & 84 scenarios         & pass & \req{FR-18}--\req{FR-21} & \LedgerSteps-step ledger & Met \\
+Frontend            & typecheck + build    & clean& \req{FR-22}, \req{FR-23} & Conflict-free table & Met \\
+                    &                      &      & \req{FR-24}--\req{FR-27} & \CorpusAccepted/\CorpusTotal\ with derivations & Met \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Tests that matter specifically for the assessed claims: \texttt{test\_ll1.py} asserts the
+constructed table has no conflicting cells; \texttt{test\_lexer.py} covers multiword
+matching, refusal to match across a separator, accent folding and homograph preservation;
+\texttt{test\_grammar.py} checks the ledger is non-empty and left recursion is gone;
+\texttt{test\_field\_corpus.py} pins provenance --- every statement attested, attributed and
+byte-identical to what was transcribed; and \texttt{test\_analysis.py} pins the verdict of
+every statement, so a grammar change that alters a published result cannot pass silently.

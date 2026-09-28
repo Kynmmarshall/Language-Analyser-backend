@@ -1,0 +1,102 @@
+\section{Results}\label{sec:results}
+
+\subsection{Accept / reject outcomes}
+
+Every collected statement is run through the full pipeline and the verdict recorded. Of
+\CorpusTotal\ statements, \CorpusAccepted\ are \accepted\ and \CorpusRejected\ are
+\rejected\ --- an acceptance rate of 91\,\%. The \textbf{Statement} column reproduces the
+raw transcription exactly as it was written down.
+
+\input{generated/corpus-results}
+
+\begin{keypoint}[What this table is]
+This is the complete collected corpus, not a selected subset. Nothing was dropped for
+failing to parse: the two rejections are printed alongside the acceptances because a
+recogniser that is only shown the inputs it handles has not been evaluated at all.
+\end{keypoint}
+
+\subsection{Why the rejections are rejections}
+
+The two rejected statements are not bugs; they are the documented boundary of the grammar,
+and they are more informative than the acceptances.
+
+\subsubsection*{Adverb after the object}
+
+The grammar places adverbs \emph{before} the verb group (\nonterm{Predicate} $\rightarrow$
+\term{ADV} \nonterm{Predicate}) or \emph{inside} it (\nonterm{VerbTail} $\rightarrow$
+\term{ADV} \nonterm{VerbTail}). It has no production admitting an adverb after a completed
+object noun phrase, so the parser reaches \nonterm{Comps} with an \term{ADV} lookahead,
+finds an empty cell, and reports the expected set
+\{\term{NOUN}, \term{DET}, \term{PRON}, \term{PREP}, \term{ADJ}\}.
+
+\subsubsection*{Post-verbal clitic pronoun}
+
+Francanglais permits a clitic pronoun attached after the verb. Modelling this requires
+distinguishing a clitic pronoun from a full pronominal noun phrase, and both are currently
+\term{PRON}. Adding a post-verbal \term{PRON} alternative to \nonterm{Comps} would collide
+with \nonterm{Comps} $\rightarrow$ \nonterm{NP} \nonterm{Comps}, since \term{PRON} is
+already in FIRST(\nonterm{NP}) --- an LL(1) conflict.
+
+\begin{limitbox}[The honest trade-off]
+Both limitations could be removed by splitting \term{PRON} into \term{PRON} and
+\term{CLITIC} at the lexical level and adding the corresponding productions. We did not do
+this, because it would mean re-annotating pronoun entries on evidence we have not yet
+collected. Reporting two principled rejections is more defensible than widening the
+grammar until everything is accepted --- a grammar that accepts every string proves nothing.
+\end{limitbox}
+
+\subsection{Verification against the requirements}\label{sec:verification}
+
+Every claim in this report is backed by an automated suite run against the same code that
+produced its tables.
+
+\begin{center}
+\small
+\begin{tabular}{@{}l l l@{}}
+\toprule
+\textbf{Check} & \textbf{Scope} & \textbf{Result} \\
+\midrule
+\texttt{pytest}       & 11 test modules, 158 tests            & all passing \\
+\texttt{ruff check}   & full source tree                      & clean \\
+\texttt{pyright}      & strict mode, full source tree         & 0 errors \\
+Playwright e2e        & 84 scenarios (24 skipped by platform) & all passing \\
+Frontend              & TypeScript typecheck and production build & clean \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Mapping the acceptance criteria of Section~\ref{part:srs} onto measured outcomes:
+
+\begin{center}
+\small
+\begin{tabular}{@{}l p{6.2cm} l@{}}
+\toprule
+\textbf{Requirement} & \textbf{Evidence} & \textbf{Status} \\
+\midrule
+\req{FR-1}--\req{FR-7} & \CorpusAttested\ attested field statements, all attributed; \texttt{test\_field\_corpus.py} & Met \\
+\req{FR-9}--\req{FR-16} & Regex table, \LexiconTotal\ entries, \texttt{test\_lexer.py} & Met \\
+\req{FR-17}            & Three frequency tables, Section~\ref{sec:frequency} & Met \\
+\req{FR-18}--\req{FR-21}& \LedgerSteps-step ledger, \texttt{test\_grammar.py} & Met \\
+\req{FR-22}, \req{FR-23}& Conflict-free table, \texttt{test\_ll1.py} & Met \\
+\req{FR-24}--\req{FR-26}& \CorpusAccepted/\CorpusTotal\ accepted with derivations & Met \\
+\req{FR-27}            & \texttt{core/suggest.py}, Appendix~\ref{app:screens} & Met \\
+\req{NFR-3}            & Automated conflict assertion & Met \\
+\req{NFR-6}            & Axe scans on every view & Met \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Tests that matter specifically for the assessed claims:
+
+\begin{itemize}[leftmargin=1.4em, itemsep=0.15em]
+  \item \texttt{test\_ll1.py} asserts the constructed table has no conflicting cells.
+  \item \texttt{test\_lexer.py} covers multiword matching, refusal to match across a
+        separator, accent folding and homograph preservation.
+  \item \texttt{test\_grammar.py} checks the ledger is non-empty and left recursion is gone.
+  \item \texttt{test\_corpus.py} checks a \texttt{field} record without attestation is
+        rejected at import.
+  \item \texttt{test\_field\_corpus.py} pins provenance: every statement attested,
+        attributed, and byte-identical to what was transcribed.
+  \item \texttt{test\_analysis.py} pins the verdict of every statement, so a grammar change
+        that alters a published result cannot pass silently.
+\end{itemize}

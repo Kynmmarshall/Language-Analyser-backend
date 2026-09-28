@@ -1,0 +1,52 @@
+@startuml
+skinparam dpi 160
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam usecase {
+  BorderColor #C55A11
+  BackgroundColor #FDF2E9
+  FontColor #14213D
+}
+skinparam actor {
+  BorderColor #1F3864
+  FontColor #14213D
+}
+
+left to right direction
+
+actor "Visitor\n(anonymous)" as Visitor
+actor "Collector\n(group account)" as Collector
+actor "Reviewer\n(group account)" as Reviewer
+actor "Instructor" as Instructor
+
+rectangle "Francanglais Studio" {
+  usecase "Analyse free text" as UC1
+  usecase "Read a word's meaning" as UC2
+  usecase "Request a repair hint" as UC3
+  usecase "Submit collected statement" as UC4
+  usecase "Edit statement revision" as UC5
+  usecase "Review and publish revision" as UC6
+  usecase "Search the lexicon" as UC7
+  usecase "View grammar derivation\nand LL(1) table" as UC8
+  usecase "View corpus statistics" as UC9
+  usecase "Export evidence snapshot" as UC10
+}
+
+Visitor --> UC1
+Visitor --> UC2
+Visitor --> UC3
+Collector --> UC4
+Collector --> UC5
+Collector --> UC1
+Reviewer --> UC6
+Reviewer --> UC9
+Instructor --> UC7
+Instructor --> UC8
+Instructor --> UC9
+Instructor --> UC10
+
+UC1 ..> UC2 : <<extend>>
+UC1 ..> UC3 : <<extend>>
+
+@enduml

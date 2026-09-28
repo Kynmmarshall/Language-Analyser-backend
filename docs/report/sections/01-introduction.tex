@@ -1,0 +1,102 @@
+\section{Introduction}\label{sec:intro}
+
+\subsection{Project context}
+
+Yaound\'e is a multilingual city. In a single taxi ride a passenger may hear French
+grammar carrying English verbs, a Pidgin discourse particle, and a noun borrowed from
+Duala or Ewondo --- often inside one sentence. The resulting variety, commonly called
+\emph{Francanglais} or \emph{camfranglais}, has no standard written form, no authoritative
+dictionary, and no fixed orthography. It is nonetheless the everyday working language of
+commuting, market bargaining, roadside trade and campus life.
+
+\subsection{Objective}
+
+To design and implement a mini-language analyzer capable of performing lexical and
+syntactic analysis on real spoken expressions collected in Yaound\'e, and to detect
+patterns relating to commuting, market activity, security, weather, transport, electricity
+and everyday transactions.
+
+\subsection{Scope}
+
+\textbf{In scope.} Manual collection and transcription of real statements; a hand-written
+scanner and lexer driven by documented regular expressions; a context-free grammar reduced
+to LL(1) form with recorded transformations; FIRST/FOLLOW computation and parsing-table
+construction; a predictive parser returning an explicit accept/reject verdict; token
+frequency and variation analysis; and a web application exposing all of the above.
+
+\textbf{Out of scope.} Semantic analysis, code generation and optimisation --- this is a
+compiler \emph{front end}. Machine translation, speech recognition and statistical
+language modelling are likewise excluded: every decision the analyzer makes is rule-based
+and traceable to a specific lexicon entry or grammar production.
+
+\begin{keypoint}[Guiding design principle]
+The analyzer recognises a \emph{documented subset} of collected speech. It never pretends
+to understand every sentence, never silently discards an unknown word, and never silently
+resolves a grammar ambiguity. Unknown vocabulary and parsing conflicts are both reported
+explicitly, because those reports are the evidence this report is built on.
+\end{keypoint}
+
+\subsection{Team and division of work}
+
+Collection was shared across all three members, as the assignment requires. Build
+responsibilities were divided by layer so that each member owned a distinct part of the
+pipeline.
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{5.1cm} l p{5.4cm}@{}}
+\toprule
+\textbf{Member} & \textbf{Matricule} & \textbf{Primary responsibility} \\
+\midrule
+Kamdeu Yamdjeuson Neil Marshall & \texttt{ICTU20241386} &
+  Grammar design, LL(1) transformation and parser; system architecture \\
+\addlinespace
+Eyong Seanna Tabe & \texttt{ICTU20241297} &
+  Lexicon curation, token classification and frequency analysis \\
+\addlinespace
+Tuheu Tchoubi Pempeme Moussa Fahdil & \texttt{ICTU20241393} &
+  Corpus tooling, provenance validation and the web interface \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Scale of the delivered system}
+
+\begin{center}
+\small
+\begin{tabular}{@{}lr@{\hskip 26pt}lr@{}}
+\toprule
+\textbf{Corpus} & & \textbf{Grammar} & \\
+\midrule
+Statements collected      & \CorpusTotal    & Terminals                    & \TerminalCount \\
+\quad accepted            & \CorpusAccepted & Nonterminals (as authored)   & \NonterminalCount \\
+\quad rejected            & \CorpusRejected & Productions (authored)       & \ProductionCount \\
+Topic rules               & \TopicCount     & Productions (executable)     & \ExecProductionCount \\
+\midrule
+\textbf{Lexicon} & & Transformation steps        & \LedgerSteps \\
+\midrule
+Total entries             & \LexiconTotal   & \textbf{Verification} & \\
+\quad corpus-attested     & \LexiconCorpus  & Backend tests                & 158 \\
+\quad dictionary-derived  & \LexiconDictionary & End-to-end scenarios      & 84 \\
+Multiword entries         & \LexiconMultiword & Donor languages modelled   & \OriginCount \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{How this report is organised}
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll p{7.4cm}@{}}
+\toprule
+\textbf{Part} & \textbf{Content} & \textbf{Answers} \\
+\midrule
+I   & Overview & Context, objective, scope \\
+II  & SRS      & What the system must do, and for whom \\
+III & SDD      & How it is structured to do it \\
+IV  & Compiler & Data collection, lexical analysis, grammar, parser \\
+V   & Evaluation & Accept/reject results, linguistic discussion \\
+App.& Evidence & Full grammar, lexicon, screenshots, reproduction \\
+\bottomrule
+\end{tabular}
+\end{center}

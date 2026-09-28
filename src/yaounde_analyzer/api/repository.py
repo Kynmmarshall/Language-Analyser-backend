@@ -212,6 +212,37 @@ def list_statement_records(session: Session) -> list[StatementRecord]:
     return list(session.scalars(select(StatementRecord)).all())
 
 
+def latest_collector_id(session: Session, statement_id: str) -> str | None:
+    """Collector on the newest revision, read as a scalar so no ORM record is held."""
+    return session.scalar(
+        select(StatementRevisionRow.collector_id)
+        .join(StatementRecord, StatementRevisionRow.record_id == StatementRecord.id)
+        .where(StatementRecord.statement_id == statement_id)
+        .order_by(StatementRevisionRow.revision.desc())
+        .limit(1)
+    )
+
+
+def next_statement_id(session: Session, source_kind: str) -> str:
+    """Next free sequential id for a source kind, e.g. 'field-007'.
+
+    Ids already in use that do not follow the pattern (imported fixtures, for example)
+    are ignored rather than renumbered.
+    """
+    prefix = f"{source_kind}-"
+    existing = session.scalars(
+        select(StatementRecord.statement_id).where(
+            StatementRecord.statement_id.like(f"{prefix}%")
+        )
+    ).all()
+    highest = 0
+    for statement_id in existing:
+        suffix = statement_id[len(prefix) :]
+        if suffix.isdigit():
+            highest = max(highest, int(suffix))
+    return f"{prefix}{highest + 1:03d}"
+
+
 def publish_revision(session: Session, statement_id: str, revision: int) -> StatementRevisionRow:
     record = get_statement_record(session, statement_id)
     if record is None:

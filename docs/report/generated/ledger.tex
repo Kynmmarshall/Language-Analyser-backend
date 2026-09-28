@@ -1,0 +1,16 @@
+\begin{longtable}{@{}p{0.20\linewidth}p{0.46\linewidth}p{0.26\linewidth}@{}}
+\toprule
+\textbf{Transformation} & \textbf{Description} & \textbf{Rules produced} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+left recursion elimination & Eliminated direct left recursion on 'Seq' using fresh nonterminal "Seq'" & \scriptsize\texttt{demo.gram.seq4.lr, demo.gram.seq1.tail, demo.gram.seq2.tail, demo.gram.seq3.tail, Seq'.eps} \\
+\addlinespace
+left factoring & Factored common prefix ('SEP',) on "Seq'" using fresh nonterminal "Seq''" & \scriptsize\texttt{Seq'.factor0, demo.gram.seq2.tail.tail0, demo.gram.seq3.tail.tail0} \\
+\addlinespace
+left factoring & Factored common prefix ('INTJ',) on 'Unit' using fresh nonterminal "Unit'" & \scriptsize\texttt{Unit.factor1, demo.gram.unit1.tail1, demo.gram.unit2.tail1} \\
+\addlinespace
+left factoring & Factored common prefix ('DET',) on 'NP' using fresh nonterminal "NP'" & \scriptsize\texttt{NP.factor2, demo.gram.np1.tail2, demo.gram.np2.tail2} \\
+\addlinespace
+\end{longtable}
