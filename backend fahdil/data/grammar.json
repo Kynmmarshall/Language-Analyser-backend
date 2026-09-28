@@ -1,0 +1,48 @@
+{
+  "description": "Context-free grammar describing the structure of collected Yaoundé pidgin / franc-anglais expressions. Terminals are part-of-speech categories produced by the lexer/POS-tagger: DET, NOUN, PRON, VERB, PREP, CONJ. EPS marks an empty (epsilon) production.",
+
+  "original": {
+    "start": "S",
+    "productions": {
+      "S":      [["S", "CONJ", "CLAUSE"], ["CLAUSE"]],
+      "CLAUSE": [["NP", "VP"]],
+      "NP":     [["DET", "NOUN"], ["PRON"], ["NOUN"]],
+      "VP":     [["VERB", "NP", "PP"], ["VERB", "NP"], ["VERB", "PP"], ["VERB"]],
+      "PP":     [["PREP", "NP"]]
+    },
+    "note": "S is LEFT-RECURSIVE (S -> S CONJ CLAUSE), the same shape as E -> E + T in an expression grammar. VP's four alternatives all share the prefix VERB. Neither issue is usable by a top-down / LL(1) parser as-is.",
+    "note_fr": "S est RÉCURSIVE À GAUCHE (S -> S CONJ CLAUSE), la même forme que E -> E + T dans une grammaire d'expressions. Les quatre alternatives de VP partagent toutes le préfixe VERB. Aucun des deux problèmes n'est utilisable tel quel par un analyseur descendant / LL(1)."
+  },
+
+  "after_left_recursion_removal": {
+    "start": "S",
+    "productions": {
+      "S":      [["CLAUSE", "SREST"]],
+      "SREST":  [["CONJ", "CLAUSE", "SREST"], ["EPS"]],
+      "CLAUSE": [["NP", "VP"]],
+      "NP":     [["DET", "NOUN"], ["PRON"], ["NOUN"]],
+      "VP":     [["VERB", "NP", "PP"], ["VERB", "NP"], ["VERB", "PP"], ["VERB"]],
+      "PP":     [["PREP", "NP"]]
+    },
+    "note": "Standard immediate-left-recursion elimination: A -> A a | b becomes A -> b A', A' -> a A' | EPS, applied to S (a = CONJ CLAUSE, b = CLAUSE).",
+    "note_fr": "Élimination standard de la récursivité gauche immédiate : A -> A a | b devient A -> b A', A' -> a A' | EPS, appliquée à S (a = CONJ CLAUSE, b = CLAUSE)."
+  },
+
+  "after_left_factoring": {
+    "start": "S",
+    "productions": {
+      "S":      [["CLAUSE", "SREST"]],
+      "SREST":  [["CONJ", "CLAUSE", "SREST"], ["EPS"]],
+      "CLAUSE": [["NP", "VP"]],
+      "NP":     [["DET", "NOUN"], ["PRON"], ["NOUN"]],
+      "VP":     [["VERB", "VP1"]],
+      "VP1":    [["NP", "VP2"], ["PP"], ["EPS"]],
+      "VP2":    [["PP"], ["EPS"]],
+      "PP":     [["PREP", "NP"]]
+    },
+    "note": "Two rounds of left factoring on VP's four VERB-prefixed alternatives: first VP -> VERB VP1 pulls out the shared VERB; then VP1's NP-prefixed alternatives (NP PP vs NP alone) are factored again into VP1 -> NP VP2, VP2 -> PP | EPS. This final grammar is LL(1) (verified programmatically: no FIRST/FIRST or FIRST/FOLLOW conflicts) and is used for FIRST/FOLLOW, the LL(1) table, and parsing. Coordination (CONJ) joins whole clauses, not sub-phrases inside NP or VP — joining sub-phrases (e.g. 'taxi and bendskin') is a genuine natural-language attachment ambiguity intentionally left outside this grammar's coverage, discussed in the report.",
+    "note_fr": "Deux passes de factorisation gauche sur les quatre alternatives de VP préfixées par VERB : d'abord VP -> VERB VP1 extrait le VERB commun ; puis les alternatives de VP1 préfixées par NP (NP PP vs NP seul) sont factorisées à nouveau en VP1 -> NP VP2, VP2 -> PP | EPS. Cette grammaire finale est LL(1) (vérifié par programme : aucun conflit FIRST/FIRST ou FIRST/FOLLOW) et sert pour FIRST/FOLLOW, la table LL(1) et l'analyse syntaxique. La coordination (CONJ) relie des propositions entières, pas des sous-phrases à l'intérieur de NP ou VP — relier des sous-phrases (ex. « taxi and bendskin ») est une véritable ambiguïté d'attachement en langue naturelle, volontairement laissée hors de la couverture de cette grammaire, et discutée dans le rapport.",
+    "terminals": ["DET", "NOUN", "PRON", "VERB", "PREP", "CONJ"],
+    "non_terminals": ["S", "SREST", "CLAUSE", "NP", "VP", "VP1", "VP2", "PP"]
+  }
+}

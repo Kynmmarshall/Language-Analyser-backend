@@ -1,0 +1,19 @@
+{
+  "statements": [
+    { "id": 1,  "topic": "Taxi and commuting issues",          "text": "Taxi drop me for quartier" },
+    { "id": 2,  "topic": "Poor internet connectivity",         "text": "Le réseau no dey work again" },
+    { "id": 3,  "topic": "Limited Electricity supply",         "text": "Courant don go since morning" },
+    { "id": 4,  "topic": "Market bargaining",                  "text": "Chairman reduce this price small" },
+    { "id": 5,  "topic": "Rainy season struggles",              "text": "La pluie don spoil the road" },
+    { "id": 6,  "topic": "Fuel scarcity",                       "text": "Essence no dey for station" },
+    { "id": 7,  "topic": "Roadside business interactions",      "text": "Madame sell me tchop quick quick" },
+    { "id": 8,  "topic": "Bendskin communication",              "text": "Bendskin hala me small money" },
+    { "id": 9,  "topic": "Security announcements or checkpoints","text": "Gendarme stop the car for contrôle" },
+    { "id": 10, "topic": "Life at the ICT University",          "text": "Étudiant dey wait for quartier bus" },
+    { "id": 11, "topic": "Market bargaining",                   "text": "Le prix be too much oh" },
+    { "id": 12, "topic": "Bendskin communication",               "text": "Moto dey go fast for road" },
+    { "id": 13, "topic": "Taxi and commuting issues",           "text": "This taxi and that bendskin dey wait for quartier" },
+    { "id": 14, "topic": "Roadside business interactions",      "text": "Madame sell tchop and drink for road" }
+  ],
+  "note": "SAMPLE / PLACEHOLDER DATA. Replace with your group's own manually transcribed real-life recordings from Yaoundé (taxis, chop houses, roadside businesses, bendskins, checkpoints, campus) before final submission — the exam requires original data collected by each group."
+}
